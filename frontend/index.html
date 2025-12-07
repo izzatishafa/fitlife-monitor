@@ -1,0 +1,800 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FitLife Monitor - Health Tracker</title>
+
+    <!-- TailwindCSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="css/styles.css">
+
+    <!-- Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+
+<body class="bg-gradient-to-br from-white to-cyan-100 min-h-screen">
+
+    <!-- Header -->
+    <header class="flex bg-cyan-900 shadow-md">
+        <div class="container mx-auto px-6 py-6">
+            <h1 class="text-3xl font-bold text-white flex items-center gap-2">
+                <i class="fas fa-heartbeat"></i>
+                FitLife Monitor
+            </h1>
+            <p class="text-white text-sm mt-1">Track your health, transform your life</p>
+        </div>
+        <div class="flex items-center mx-7 px-3 py-1 h-10 mt-7 gap-2 cursor-pointer">
+            <i class="fas fa-angle-down text-md px-1.5 text-white"></i>
+            <img src="assets/picts/profil-picture-default.jpg" alt="kaga mau tampil nih" class="w-10 rounded-full">
+        </div>
+    </header>
+
+    <!-- Navigation -->
+    <nav class="bg-white shadow-sm sticky top-0 z-10">
+        <div class="container mx-auto px-4">
+            <div class="flex justify-center gap-1 overflow-x-auto">
+                <button onclick="showTab('dashboard')"
+                    class="tab-btn active px-4 py-3 flex items-center gap-2 font-medium" data-tab="dashboard">
+                    <i class="fas fa-chart-line"></i> Dashboard
+                </button>
+                <button onclick="showTab('water')" class="tab-btn px-4 py-3 flex items-center gap-2 font-medium"
+                    data-tab="water">
+                    <i class="fas fa-tint"></i> Water
+                </button>
+                <button onclick="showTab('exercise')" class="tab-btn px-4 py-3 flex items-center gap-2 font-medium"
+                    data-tab="exercise">
+                    <i class="fas fa-running"></i> Exercise
+                </button>
+                <button onclick="showTab('sleep')" class="tab-btn px-4 py-3 flex items-center gap-2 font-medium"
+                    data-tab="sleep">
+                    <i class="fas fa-moon"></i> Sleep
+                </button>
+                <button onclick="showTab('bmi')" class="tab-btn px-4 py-3 flex items-center gap-2 font-medium"
+                    data-tab="bmi">
+                    <i class="fas fa-calculator"></i> BMI
+                </button>
+                <button onclick="showTab('calories')" class="tab-btn px-4 py-3 flex items-center gap-2 font-medium"
+                    data-tab="calories">
+                    <i class="fas fa-bowl-food"></i> Calories
+                </button>
+                <button onclick="showTab('mood')" class="tab-btn px-4 py-3 flex items-center gap-2 font-medium"
+                    data-tab="mood">
+                    <i class="fas fa-face-grin"></i> Mood
+                </button>
+                <button onclick="showTab('summary')" class="tab-btn px-4 py-3 flex items-center gap-2 font-medium"
+                    data-tab="summary">
+                    <i class="fas fa-chart-line"></i> Summary
+                </button>
+                <button onclick="showTab('database')" class="tab-btn px-4 py-3 flex items-center gap-2 font-medium"
+                    data-tab="database">
+                    <i class="fas fa-database"></i> Database
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main -->
+    <main class="container mx-auto px-4 py-8">
+
+        <!-- DASHBOARD TAB -->
+        <div id="dashboard-tab" class="tab-content active">
+            <div class="flex items-start gap-6">
+                <div class="w-1/4 flex flex-col gap-6">
+
+                    <!-- Digital Clock -->
+                    <div class="flex justify-center items-center">
+                        <div class="relative w-64 h-64">
+
+                            <!-- SVG Circular Progress -->
+                            <svg class="w-full h-full" viewBox="0 0 100 100">
+
+                                <!-- Outer Ring (Hours) -->
+                                <circle cx="50" cy="50" r="46" stroke="#a1d2da" stroke-width="4" fill="none"
+                                    opacity="0.4" />
+                                <circle id="hour-ring" cx="50" cy="50" r="46" stroke="#164e63" stroke-width="4"
+                                    fill="none" stroke-linecap="round" transform="rotate(-90 50 50)" />
+
+                                <!-- Middle Ring (Minutes) -->
+                                <circle cx="50" cy="50" r="38" stroke="#a7e7ff" stroke-width="4" fill="none"
+                                    opacity="0.4" />
+                                <circle id="minute-ring" cx="50" cy="50" r="38" stroke="#3d8faf" stroke-width="4"
+                                    fill="none" stroke-linecap="round" transform="rotate(-90 50 50)" />
+
+                                <!-- Inner Ring (Seconds) -->
+                                <circle cx="50" cy="50" r="30" stroke="#c3dde6" stroke-width="4" fill="none"
+                                    opacity="0.4" />
+                                <circle id="second-ring" cx="50" cy="50" r="30" stroke="#90d9e6" stroke-width="4"
+                                    fill="none" stroke-linecap="round" transform="rotate(-90 50 50)" />
+
+                            </svg>
+
+                            <!-- Digital Clock Content -->
+                            <div class="absolute inset-0 flex flex-col items-center justify-center text-center">
+                                <p id="c-date" class="text-sm font-medium text-gray-700">----</p>
+                                <p id="c-time" class="text-xl font-bold text-gray-900">--:--:--</p>
+                                <p id="c-day" class="text-sm text-gray-600">---</p>
+                            </div>
+
+                        </div>
+                    </div>
+
+
+                    <!-- Summary Section -->
+                    <div class="p-6 rounded-xl flex flex-col gap-2">
+                        <h5 class="font-medium">Summary</h5>
+                        <div class="border"></div>
+                        <button
+                            class="text-left text-sm border rounded-md p-2 cursor-pointer hover:scale-[1.02] transition"
+                            onclick="showTab('summary')">
+                            <i class="fas fa-chart-line text-md px-1.5"></i>
+                            Summary of Today
+                        </button>
+                        <button
+                            class="text-left text-sm border rounded-md p-2 cursor-pointer hover:scale-[1.02] transition"
+                            onclick="showTab('database')">
+                            <i class="fas fa-database text-md px-1.5"></i>
+                            Database
+                        </button>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-2 md:grid-cols-1 lg:grid-cols-3 gap-6">
+
+                    <!-- Water Card -->
+                    <div class="w-72 h-42 bg-white p-6 rounded-xl shadow-lg p-6 cursor-pointer hover:scale-[1.02] transition"
+                        onclick="showTab('water')" data-tab="water">
+                        <div class="flex items-center gap-5 mb-4">
+                            <div class="bg-blue-100 p-3 rounded-lg">
+                                <i class="fas fa-tint text-2xl text-blue-600"></i>
+                            </div>
+                            <div>
+                                <p class="text-gray-600 text-sm">Water Intake</p>
+                                <p id="dashboard-water" class="text-2xl font-bold">0ml</p>
+                            </div>
+                        </div>
+                        <div class="w-full bg-gray-200 rounded-full h-2">
+                            <div id="dashboard-water-progress" class="h-2 bg-blue-600 rounded-full transition-all"
+                                style="width:0%"></div>
+                        </div>
+                        <p id="dashboard-water-percent" class="text-sm text-gray-600 mt-2">0% of 2000ml</p>
+                    </div>
+
+                    <!-- Exercise Card-->
+                    <div class="bg-white p-6 rounded-xl shadow-lg p-6 cursor-pointer hover:scale-[1.02] transition"
+                        onclick="showTab('exercise')" data-tab="exercise">
+                        <div class="flex items-center gap-5 mb-4">
+                            <div class="bg-green-100 p-3 rounded-lg">
+                                <i class="fas fa-running text-2xl text-green-600"></i>
+                            </div>
+                            <div>
+                                <p class="text-gray-600 text-sm">Exercise Today</p>
+                                <p id="dashboard-exercise" class="text-2xl font-bold">0 min</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Sleep Card-->
+                    <div class="bg-white p-6 rounded-xl shadow-lg p-6 cursor-pointer hover:scale-[1.02] transition"
+                        onclick="showTab('sleep')" data-tab="sleep">
+                        <div class="flex items-center gap-5 mb-4">
+                            <div class="bg-purple-100 p-3 rounded-lg">
+                                <i class="fas fa-moon text-2xl text-purple-600"></i>
+                            </div>
+                            <div>
+                                <p class="text-gray-600 text-sm">Avg Sleep</p>
+                                <p id="dashboard-sleep" class="text-2xl font-bold">0 hrs</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- BMI Card-->
+                    <div class="bg-white p-6 rounded-xl shadow-lg p-6 cursor-pointer hover:scale-[1.02] transition"
+                        onclick="showTab('bmi')" data-tab="bmi">
+                        <div class="flex items-center gap-5 mb-4">
+                            <div class="bg-orange-100 p-3 rounded-lg">
+                                <i class="fas fa-calculator text-2xl text-orange-600"></i>
+                            </div>
+                            <div>
+                                <p class="text-gray-600 text-sm">BMI</p>
+                                <p id="dashboard-bmi" class="text-2xl font-bold">--</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Calories Card -->
+                    <div class="bg-white rounded-xl shadow-lg p-6 cursor-pointer hover:scale-[1.02] transition"
+                        onclick="showTab('calories')" data-tab="calories">
+                        <div class="flex items-center gap-3 mb-4">
+                            <div class="bg-yellow-100 p-3 rounded-lg">
+                                <i class="fas fa-utensils text-2xl text-yellow-600"></i>
+                            </div>
+                            <div>
+                                <p class="text-gray-600 text-sm">Calories Today</p>
+                                <p id="dashboard-calories" class="text-2xl font-bold text-gray-800">0 kcal</p>
+                            </div>
+                        </div>
+                        <div class="w-full bg-gray-200 rounded-full h-2">
+                            <div id="dashboard-calories-progress" class="bg-yellow-600 h-2 rounded-full transition-all"
+                                style="width: 0%"></div>
+                        </div>
+                        <p id="dashboard-calories-percent" class="text-sm text-gray-600 mt-2">0% of 2000 kcal</p>
+                    </div>
+
+                    <!-- Mood Card-->
+                    <div class="bg-white rounded-xl shadow-lg p-6 cursor-pointer hover:scale-[1.02] transition"
+                        onclick="showTab('mood')" data-tab="mood">
+                        <div class="flex items-center gap-3 mb-4">
+                            <div class="bg-pink-100 p-3 rounded-lg">
+                                <i class="fas fa-smile text-2xl text-pink-600"></i>
+                            </div>
+                            <div>
+                                <p class="text-gray-600 text-sm">Today's Mood</p>
+                                <p id="dashboard-mood" class="text-4xl">😐</p>
+                            </div>
+                        </div>
+                        <p id="dashboard-mood-avg" class="text-sm text-gray-600">Weekly avg: --</p>
+                    </div>
+
+
+                </div>
+            </div>
+
+            <!-- Welcome -->
+            <div class="rounded-xl p-6 text-center mt-14">
+                <h3 class="text-xl font-bold mb-2">Welcome to FitLife Monitor!</h3>
+                <p class="text-gray-600">Track your health journey every day 🤗</p>
+            </div>
+        </div>
+
+        <!-- WATER TAB -->
+        <div id="water-tab" class="tab-content hidden">
+            <div class="bg-white p-6 space-y-6 rounded-xl shadow-lg">
+                <h2 class="text-2xl font-bold text-blue-600 flex items-center gap-2">
+                    <i class="fas fa-tint"></i> Water Intake Tracker
+                </h2>
+
+                <!-- Input -->
+                <div class="p-4 bg-blue-50 rounded-lg">
+                    <label class="block text-sm mb-2">Add Water (ml)</label>
+                    <div class="flex gap-3">
+                        <input type="number" id="water-amount" placeholder="250"
+                            class="flex-1 px-4 py-2 border rounded-lg">
+                        <button onclick="addWater()" class="bg-blue-600 text-white px-6 py-2 rounded-lg">
+                            <i class="fas fa-plus"></i> Add
+                        </button>
+                    </div>
+
+                    <label class="block mt-4 text-sm mb-2">Daily Goal (ml)</label>
+                    <input type="number" id="water-goal" value="2000" class="w-full px-4 py-2 border rounded-lg"
+                        oninput="updateWaterGoal()">
+
+                </div>
+
+                <!-- Progress -->
+                <p id="water-progress-text" class="text-blue-600 font-medium">0ml / 2000ml</p>
+                <div class="w-full bg-gray-200 rounded-full h-4">
+                    <div id="water-progress-bar" class="bg-blue-600 h-4 rounded-full" style="width:0%"></div>
+                </div>
+
+                <!-- Logs -->
+                <h3 class="text-lg font-semibold mb-2">Today's Logs</h3>
+                <div id="water-logs" class="max-h-80 overflow-y-auto text-center text-gray-500">
+                    No water logged today.
+                </div>
+            </div>
+        </div>
+
+        <!-- EXERCISE TAB -->
+        <div id="exercise-tab" class="tab-content hidden">
+            <div class="bg-white p-6 rounded-xl shadow-lg space-y-6">
+                <h2 class="text-2xl font-bold text-green-600 flex items-center gap-2">
+                    <i class="fas fa-running"></i> Exercise Logger
+                </h2>
+
+                <div class="p-4 bg-green-50 rounded-lg space-y-4">
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div>
+                            <label class="text-sm">Type</label>
+                            <select id="exercise-type" class="w-full px-4 py-2 border rounded-lg">
+                                <option value="Running">Running</option>
+                                <option value="Walking">Walking</option>
+                                <option value="Cycling">Cycling</option>
+                                <option value="Swimming">Swimming</option>
+                                <option value="Gym">Gym</option>
+                                <option value="Yoga">Yoga</option>
+                                <option value="Other">Other</option>
+                            </select>
+                        </div>
+
+                        <div>
+                            <label class="text-sm">Duration (minutes)</label>
+                            <input id="exercise-duration" type="number" class="w-full px-4 py-2 border rounded-lg"
+                                placeholder="30">
+                        </div>
+
+                        <div>
+                            <label class="text-sm">Calories</label>
+                            <input id="exercise-calories" type="number" class="w-full px-4 py-2 border rounded-lg"
+                                placeholder="200">
+                        </div>
+                    </div>
+
+                    <button onclick="addExercise()" class="bg-green-600 text-white px-6 py-2 rounded-lg">
+                        <i class="fas fa-plus"></i> Log Exercise
+                    </button>
+                </div>
+
+                <p id="exercise-total" class="text-lg font-bold">Today's Total: 0 minutes</p>
+
+                <h3 class="text-lg font-semibold">Recent Workouts</h3>
+                <div id="exercise-logs" class="max-h-80 overflow-y-auto text-gray-500 text-center">
+                    No exercises logged yet.
+                </div>
+            </div>
+        </div>
+
+        <!-- SLEEP TAB -->
+        <div id="sleep-tab" class="tab-content hidden">
+            <div class="bg-white p-6 rounded-xl shadow-lg space-y-6">
+                <h2 class="text-2xl font-bold text-purple-600 flex items-center gap-2">
+                    <i class="fas fa-moon"></i> Sleep Tracker
+                </h2>
+
+                <div class="p-4 bg-purple-50 rounded-lg space-y-4">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label class="text-sm">Sleep Hours</label>
+                            <input id="sleep-hours" type="number" step="0.5" class="w-full px-4 py-2 border rounded-lg"
+                                placeholder="7.5">
+                        </div>
+
+                        <div>
+                            <label class="text-sm">Sleep Quality</label>
+                            <select id="sleep-quality" class="w-full px-4 py-2 border rounded-lg">
+                                <option value="5">⭐⭐⭐⭐⭐ Excellent</option>
+                                <option value="4">⭐⭐⭐⭐ Good</option>
+                                <option value="3">⭐⭐⭐ Fair</option>
+                                <option value="2">⭐⭐ Poor</option>
+                                <option value="1">⭐ Very Poor</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <button onclick="addSleep()" class="bg-purple-600 text-white px-6 py-2 rounded-lg">
+                        <i class="fas fa-plus"></i> Log Sleep
+                    </button>
+                </div>
+
+                <p id="sleep-average" class="text-lg font-bold">Average Sleep: 0 hours</p>
+
+                <h3 class="text-lg font-semibold">Sleep History</h3>
+                <div id="sleep-logs" class="max-h-80 overflow-y-auto text-gray-500 text-center">
+                    No sleep logs yet.
+                </div>
+            </div>
+        </div>
+
+        <!-- BMI TAB -->
+        <div id="bmi-tab" class="tab-content hidden">
+            <div class="bg-white p-6 rounded-xl shadow-lg space-y-6">
+                <h2 class="text-2xl font-bold text-orange-600 flex items-center gap-2">
+                    <i class="fas fa-calculator"></i> BMI Calculator
+                </h2>
+
+                <div class="p-4 bg-orange-50 rounded-lg space-y-4">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label class="text-sm">Height (cm)</label>
+                            <input id="bmi-height" type="number" class="w-full px-4 py-2 border rounded-lg"
+                                placeholder="170">
+                        </div>
+
+                        <div>
+                            <label class="text-sm">Weight (kg)</label>
+                            <input id="bmi-weight" type="number" class="w-full px-4 py-2 border rounded-lg"
+                                placeholder="70">
+                        </div>
+                    </div>
+
+                    <div class="flex gap-3">
+                        <button onclick="calculateBMI()" class="bg-orange-600 text-white px-6 py-2 rounded-lg">Calculate
+                            BMI</button>
+                        <button onclick="clearBMI()" class="bg-gray-600 text-white px-6 py-2 rounded-lg">Clear</button>
+                    </div>
+                </div>
+
+                <div id="bmi-result" class="hidden p-6 bg-gradient-to-r from-orange-50 to-yellow-50 rounded-lg">
+                    <h3 class="text-lg font-semibold">Your BMI Result</h3>
+                    <div class="text-center my-4">
+                        <p id="bmi-value" class="text-5xl font-bold text-orange-600">--</p>
+                        <p id="bmi-category" class="text-xl font-semibold">--</p>
+                    </div>
+                </div>
+
+                <div class="space-y-2">
+                    <h3 class="text-lg font-semibold">BMI Categories</h3>
+                    <div class="flex justify-between p-3 bg-blue-50 rounded">
+                        <span>Underweight</span> <span>&lt; 18.5</span>
+                    </div>
+                    <div class="flex justify-between p-3 bg-green-50 rounded">
+                        <span>Normal</span> <span>18.5 - 24.9</span>
+                    </div>
+                    <div class="flex justify-between p-3 bg-yellow-50 rounded">
+                        <span>Overweight</span> <span>25 - 29.9</span>
+                    </div>
+                    <div class="flex justify-between p-3 bg-red-50 rounded">
+                        <span>Obese</span> <span>≥ 30</span>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- Calories Tab -->
+        <div id="calories-tab" class="tab-content">
+            <div class="space-y-6">
+                <div class="bg-white rounded-xl shadow-lg p-6">
+                    <h2 class="text-2xl font-bold text-yellow-600 mb-6 flex items-center gap-2">
+                        <i class="fas fa-utensils"></i>
+                        Calories Tracker
+                    </h2>
+
+                    <!-- Add Calories Form -->
+                    <div class="mb-8 p-4 bg-yellow-50 rounded-lg">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Food/Meal Name</label>
+                                <input type="text" id="calories-food" placeholder="e.g., Breakfast, Apple, Rice"
+                                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:outline-none">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Calories (kcal)</label>
+                                <input type="number" id="calories-amount" placeholder="300"
+                                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:outline-none">
+                            </div>
+                        </div>
+                        <button onclick="addCalories()"
+                            class="bg-yellow-600 text-white px-6 py-2 rounded-lg hover:bg-yellow-700 transition-colors flex items-center gap-2">
+                            <i class="fas fa-plus"></i>
+                            Log Food
+                        </button>
+                        <div class="mt-4">
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Daily Calorie Limit
+                                (kcal)</label>
+                            <input type="number" id="calories-limit" value="2000"
+                                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:outline-none">
+                        </div>
+                    </div>
+
+                    <!-- Progress -->
+                    <div class="mb-6">
+                        <div class="flex justify-between mb-2">
+                            <span class="text-sm font-medium text-gray-700">Today's Progress</span>
+                            <span id="calories-progress-text" class="text-sm font-medium text-yellow-600">0 kcal / 2000
+                                kcal</span>
+                        </div>
+                        <div class="w-full bg-gray-200 rounded-full h-4">
+                            <div id="calories-progress-bar"
+                                class="bg-gradient-to-r from-yellow-400 to-yellow-600 h-4 rounded-full transition-all"
+                                style="width: 0%"></div>
+                        </div>
+                        <p id="calories-status" class="text-sm text-gray-600 mt-2">You can still eat 2000 kcal today</p>
+                    </div>
+
+                    <!-- Today's Logs -->
+                    <h3 class="text-lg font-semibold text-gray-800 mb-4">Today's Meals</h3>
+                    <div id="calories-logs" class="space-y-2 max-h-96 overflow-y-auto">
+                        <p class="text-gray-500 text-center py-8">No food logged today. Start tracking!</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Mood Tab -->
+        <div id="mood-tab" class="tab-content">
+            <div class="space-y-6">
+                <div class="bg-white rounded-xl shadow-lg p-6">
+                    <h2 class="text-2xl font-bold text-pink-600 mb-6 flex items-center gap-2">
+                        <i class="fas fa-smile"></i>
+                        Mood Tracker
+                    </h2>
+
+                    <!-- Mood Selector -->
+                    <div class="mb-8 p-6 bg-pink-50 rounded-lg">
+                        <label class="block text-lg font-medium text-gray-700 mb-4 text-center">How are you feeling
+                            today?</label>
+
+                        <div class="flex justify-center gap-4 mb-6">
+                            <button onclick="selectMood(1)"
+                                class="mood-btn text-6xl hover:scale-110 transition-transform" data-mood="1"
+                                title="Very Sad">😢</button>
+                            <button onclick="selectMood(2)"
+                                class="mood-btn text-6xl hover:scale-110 transition-transform" data-mood="2"
+                                title="Sad">😟</button>
+                            <button onclick="selectMood(3)"
+                                class="mood-btn text-6xl hover:scale-110 transition-transform" data-mood="3"
+                                title="Neutral">😐</button>
+                            <button onclick="selectMood(4)"
+                                class="mood-btn text-6xl hover:scale-110 transition-transform" data-mood="4"
+                                title="Happy">🙂</button>
+                            <button onclick="selectMood(5)"
+                                class="mood-btn text-6xl hover:scale-110 transition-transform" data-mood="5"
+                                title="Very Happy">😁</button>
+                        </div>
+
+                        <div class="mb-4">
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Add a note (optional)</label>
+                            <textarea id="mood-note" rows="3" placeholder="What made you feel this way?"
+                                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:outline-none"></textarea>
+                        </div>
+
+                        <button onclick="saveMood()"
+                            class="w-full bg-pink-600 text-white px-6 py-3 rounded-lg hover:bg-pink-700 transition-colors font-medium">
+                            Save Today's Mood
+                        </button>
+                    </div>
+
+                    <!-- Current Mood Display -->
+                    <div class="p-6 bg-gradient-to-r from-pink-50 to-purple-50 rounded-lg text-center">
+                        <h3 class="text-lg font-semibold text-gray-800 mb-2">Today's Mood</h3>
+                        <p id="current-mood-display" class="text-7xl mb-2">😐</p>
+                        <p id="current-mood-note" class="text-gray-600 italic">No mood logged yet</p>
+                    </div>
+
+                    <!-- Weekly Average -->
+                    <div class="mt-6 p-4 bg-purple-50 rounded-lg">
+                        <p class="text-center">
+                            <span class="text-gray-600">Weekly Average Mood: </span>
+                            <span id="mood-weekly-avg" class="text-2xl font-bold text-purple-600">--</span>
+                            <span id="mood-weekly-emoji" class="text-3xl ml-2">😐</span>
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Summary Tab -->
+        <div id="summary-tab" class="tab-content">
+            <div class="space-y-6">
+                <div class="bg-white rounded-xl shadow-lg p-6">
+                    <h2 class="text-2xl font-bold text-indigo-600 mb-6 flex items-center gap-2">
+                        <i class="fas fa-chart-line"></i>
+                        Summary of Today
+                    </h2>
+
+                    <!-- Health Score -->
+                    <div class="mb-8 p-6 bg-gradient-to-r from-indigo-50 to-blue-50 rounded-xl text-center">
+                        <h3 class="text-lg font-semibold text-gray-700 mb-2">Your Health Score</h3>
+                        <div class="relative inline-block">
+                            <div id="health-score-circle"
+                                class="w-40 h-40 rounded-full border-8 border-gray-200 flex items-center justify-center bg-white">
+                                <div class="text-center">
+                                    <p id="health-score-value" class="text-5xl font-bold text-indigo-600">0</p>
+                                    <p class="text-sm text-gray-600">/ 100</p>
+                                </div>
+                            </div>
+                        </div>
+                        <p id="health-score-label" class="mt-4 text-lg font-medium text-gray-700">Getting Started</p>
+                    </div>
+
+                    <!-- Detailed Metrics -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                        <!-- Water Summary -->
+                        <div class="p-4 bg-blue-50 rounded-lg">
+                            <div class="flex items-center justify-between mb-2">
+                                <h4 class="font-semibold text-blue-900 flex items-center gap-2">
+                                    <i class="fas fa-tint text-blue-600"></i>
+                                    Water
+                                </h4>
+                                <span id="summary-water-status"
+                                    class="px-2 py-1 text-xs rounded-full bg-blue-200 text-blue-800">In Progress</span>
+                            </div>
+                            <p id="summary-water-text" class="text-2xl font-bold text-gray-800">0ml / 2000ml</p>
+                            <div class="w-full bg-blue-200 rounded-full h-2 mt-2">
+                                <div id="summary-water-progress" class="bg-blue-600 h-2 rounded-full transition-all"
+                                    style="width: 0%"></div>
+                            </div>
+                        </div>
+
+                        <!-- Exercise Summary -->
+                        <div class="p-4 bg-green-50 rounded-lg">
+                            <div class="flex items-center justify-between mb-2">
+                                <h4 class="font-semibold text-green-900 flex items-center gap-2">
+                                    <i class="fas fa-running text-green-600"></i>
+                                    Exercise
+                                </h4>
+                                <span id="summary-exercise-status"
+                                    class="px-2 py-1 text-xs rounded-full bg-green-200 text-green-800">In
+                                    Progress</span>
+                            </div>
+                            <p id="summary-exercise-text" class="text-2xl font-bold text-gray-800">0 min / 30 min</p>
+                            <div class="w-full bg-green-200 rounded-full h-2 mt-2">
+                                <div id="summary-exercise-progress" class="bg-green-600 h-2 rounded-full transition-all"
+                                    style="width: 0%"></div>
+                            </div>
+                        </div>
+
+                        <!-- Sleep Summary -->
+                        <div class="p-4 bg-purple-50 rounded-lg">
+                            <div class="flex items-center justify-between mb-2">
+                                <h4 class="font-semibold text-purple-900 flex items-center gap-2">
+                                    <i class="fas fa-moon text-purple-600"></i>
+                                    Sleep
+                                </h4>
+                                <span id="summary-sleep-status"
+                                    class="px-2 py-1 text-xs rounded-full bg-purple-200 text-purple-800">--</span>
+                            </div>
+                            <p id="summary-sleep-text" class="text-2xl font-bold text-gray-800">0 hrs (avg)</p>
+                        </div>
+
+                        <!-- Calories Summary -->
+                        <div class="p-4 bg-yellow-50 rounded-lg">
+                            <div class="flex items-center justify-between mb-2">
+                                <h4 class="font-semibold text-yellow-900 flex items-center gap-2">
+                                    <i class="fas fa-utensils text-yellow-600"></i>
+                                    Calories
+                                </h4>
+                                <span id="summary-calories-status"
+                                    class="px-2 py-1 text-xs rounded-full bg-yellow-200 text-yellow-800">Good</span>
+                            </div>
+                            <p id="summary-calories-text" class="text-2xl font-bold text-gray-800">0 kcal / 2000 kcal
+                            </p>
+                            <div class="w-full bg-yellow-200 rounded-full h-2 mt-2">
+                                <div id="summary-calories-progress"
+                                    class="bg-yellow-600 h-2 rounded-full transition-all" style="width: 0%"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Recommendations -->
+                    <div class="p-6 bg-gradient-to-r from-green-50 to-blue-50 rounded-lg">
+                        <h3 class="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
+                            <i class="fas fa-lightbulb text-yellow-500"></i>
+                            Recommendations
+                        </h3>
+                        <ul id="recommendations-list" class="space-y-2">
+                            <li class="text-gray-600">Loading recommendations...</li>
+                        </ul>
+                    </div>
+
+                    <!-- Refresh Button -->
+                    <button onclick="loadSummary()"
+                        class="w-full mt-6 bg-indigo-600 text-white px-6 py-3 rounded-lg hover:bg-indigo-700 transition-colors font-medium flex items-center justify-center gap-2">
+                        <i class="fas fa-sync-alt"></i>
+                        Refresh Summary
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Database Tab -->
+        <div id="database-tab" class="tab-content">
+            <div class="space-y-6">
+                <div class="bg-white rounded-xl shadow-lg p-6">
+                    <h2 class="text-2xl font-bold text-gray-800 mb-6 flex items-center gap-2">
+                        <i class="fas fa-database"></i>
+                        Database Management
+                    </h2>
+
+                    <!-- Database Statistics -->
+                    <div class="mb-8 p-6 bg-gray-50 rounded-lg">
+                        <h3 class="text-lg font-semibold text-gray-800 mb-4">Database Statistics</h3>
+                        <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
+                            <div class="text-center p-4 bg-white rounded-lg shadow">
+                                <p class="text-gray-600 text-sm">Water Logs</p>
+                                <p id="db-water-count" class="text-3xl font-bold text-blue-600">0</p>
+                            </div>
+                            <div class="text-center p-4 bg-white rounded-lg shadow">
+                                <p class="text-gray-600 text-sm">Exercise Logs</p>
+                                <p id="db-exercise-count" class="text-3xl font-bold text-green-600">0</p>
+                            </div>
+                            <div class="text-center p-4 bg-white rounded-lg shadow">
+                                <p class="text-gray-600 text-sm">Sleep Logs</p>
+                                <p id="db-sleep-count" class="text-3xl font-bold text-purple-600">0</p>
+                            </div>
+                            <div class="text-center p-4 bg-white rounded-lg shadow">
+                                <p class="text-gray-600 text-sm">Calories Logs</p>
+                                <p id="db-calories-count" class="text-3xl font-bold text-yellow-600">0</p>
+                            </div>
+                            <div class="text-center p-4 bg-white rounded-lg shadow">
+                                <p class="text-gray-600 text-sm">Mood Logs</p>
+                                <p id="db-mood-count" class="text-3xl font-bold text-pink-600">0</p>
+                            </div>
+                            <div class="text-center p-4 bg-white rounded-lg shadow">
+                                <p class="text-gray-600 text-sm">Total Records</p>
+                                <p id="db-total-count" class="text-3xl font-bold text-indigo-600">0</p>
+                            </div>
+                        </div>
+                        <div class="mt-4 text-center text-sm text-gray-600">
+                            <p>Date Range: <span id="db-date-range" class="font-medium">--</span></p>
+                        </div>
+                    </div>
+
+                    <!-- Export Options -->
+                    <div class="mb-8">
+                        <h3 class="text-lg font-semibold text-gray-800 mb-4">Export Data</h3>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <button onclick="exportCSV()"
+                                class="p-4 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors flex items-center justify-center gap-2">
+                                <i class="fas fa-file-csv text-2xl"></i>
+                                <div class="text-left">
+                                    <p class="font-semibold">Export as CSV</p>
+                                    <p class="text-sm opacity-90">Download spreadsheet format</p>
+                                </div>
+                            </button>
+                            <button onclick="exportJSON()"
+                                class="p-4 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center justify-center gap-2">
+                                <i class="fas fa-file-code text-2xl"></i>
+                                <div class="text-left">
+                                    <p class="font-semibold">Export as JSON</p>
+                                    <p class="text-sm opacity-90">Download raw data format</p>
+                                </div>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Data Management -->
+                    <div class="mb-8">
+                        <h3 class="text-lg font-semibold text-gray-800 mb-4">Data Management</h3>
+                        <div class="space-y-4">
+                            <!-- Cleanup Old Data -->
+                            <div class="p-4 bg-orange-50 border border-orange-200 rounded-lg">
+                                <h4 class="font-semibold text-orange-900 mb-2 flex items-center gap-2">
+                                    <i class="fas fa-broom"></i>
+                                    Cleanup Old Data
+                                </h4>
+                                <p class="text-sm text-gray-600 mb-3">Delete records older than specified days</p>
+                                <div class="flex gap-2">
+                                    <input type="number" id="cleanup-days" value="90" min="1" placeholder="Days"
+                                        class="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:outline-none">
+                                    <button onclick="cleanupOldData()"
+                                        class="bg-orange-600 text-white px-6 py-2 rounded-lg hover:bg-orange-700 transition-colors">
+                                        Cleanup
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- Clear All Data -->
+                            <div class="p-4 bg-red-50 border border-red-200 rounded-lg">
+                                <h4 class="font-semibold text-red-900 mb-2 flex items-center gap-2">
+                                    <i class="fas fa-exclamation-triangle"></i>
+                                    Clear All Data
+                                </h4>
+                                <p class="text-sm text-gray-600 mb-3">⚠️ Warning: This will delete ALL your data
+                                    permanently!</p>
+                                <button onclick="clearAllData()"
+                                    class="bg-red-600 text-white px-6 py-2 rounded-lg hover:bg-red-700 transition-colors">
+                                    Clear All Data
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Refresh Button -->
+                    <button onclick="loadDatabaseStats()"
+                        class="w-full bg-gray-600 text-white px-6 py-3 rounded-lg hover:bg-gray-700 transition-colors font-medium flex items-center justify-center gap-2">
+                        <i class="fas fa-sync-alt"></i>
+                        Refresh Statistics
+                    </button>
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-white py-6 text-center text-gray-600 text-sm">
+        FitLife Monitor - SDGs 3: Good Health and Well-being
+    </footer>
+
+    <!-- JS -->
+    <script src="js/api.js"></script>
+    <script src="js/app.js"></script>
+
+</body>
+
+</html>
