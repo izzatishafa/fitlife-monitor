@@ -49,30 +49,6 @@ function updateWaterGoal() {
     }
 }
 
-// function updateClock() {
-//     const now = new Date();
-
-//     const year = now.getFullYear();
-//     const month = String(now.getMonth() + 1).padStart(2, '0');
-//     const date = String(now.getDate()).padStart(2, '0');
-
-//     const hours = String(now.getHours()).padStart(2, '0');
-//     const minutes = String(now.getMinutes()).padStart(2, '0');
-//     const seconds = String(now.getSeconds()).padStart(2, '0');
-
-//     const dayNames = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
-//     const day = dayNames[now.getDay()];
-
-//     document.getElementById("clock-date").textContent = `${year}.${month}.${date}`;
-//     document.getElementById("clock-time").textContent = `${hours}:${minutes}:${seconds}`;
-//     document.getElementById("clock-day").textContent = day;
-// }
-
-// // Update setiap 1 detik
-// setInterval(updateClock, 1000);
-// updateClock();
-
-
 
 // ==================== DASHBOARD ====================
 function updateCircularClock() {
@@ -589,18 +565,18 @@ async function saveMood() {
 
 async function loadMoodData() {
     try {
+        // Use .catch() to handle 404 errors gracefully
         const [todayMood, avgData] = await Promise.all([
-            api.mood.getToday().catch(() => null),
-            api.mood.getAverage()
+            api.mood.getToday().catch(() => null), // Already has this ✅
+            api.mood.getAverage().catch(() => ({ average: 0 })) // Add fallback here
         ]);
 
         const moodEmojis = ['😐', '😢', '😟', '😐', '🙂', '😁'];
         const moodLabels = ['Neutral', 'Very Sad', 'Sad', 'Neutral', 'Happy', 'Very Happy'];
 
         // Display today's mood
-        if (todayMood && typeof todayMood.mood === "number") {
+        if (todayMood && todayMood.mood !== undefined) { // Better check
             const mood = todayMood.mood;
-
             document.getElementById('current-mood-display').textContent = moodEmojis[mood] || '😐';
             document.getElementById('current-mood-note').textContent =
                 todayMood.note?.trim() || moodLabels[mood] || 'No mood logged';
@@ -613,16 +589,17 @@ async function loadMoodData() {
                 document.getElementById('mood-note').value = todayMood.note;
             }
         } else {
+            // No mood logged yet - show default
             document.getElementById('current-mood-display').textContent = '😐';
             document.getElementById('current-mood-note').textContent = 'No mood logged yet';
+            selectMood(3); // Default to neutral
         }
 
-
-        // Display weekly average
-        const avg = avgData.average || 0;
+        // Display weekly average - handle null/undefined safely
+        const avg = avgData?.average || 0;
         if (avg > 0) {
             document.getElementById('mood-weekly-avg').textContent = avg.toFixed(1);
-            document.getElementById('mood-weekly-emoji').textContent = moodEmojis[Math.round(avg)];
+            document.getElementById('mood-weekly-emoji').textContent = moodEmojis[Math.round(avg)] || '😐';
         } else {
             document.getElementById('mood-weekly-avg').textContent = '--';
             document.getElementById('mood-weekly-emoji').textContent = '😐';
@@ -630,20 +607,255 @@ async function loadMoodData() {
 
     } catch (error) {
         console.error('Error loading mood data:', error);
+        // dont show error alert, just set defaults
+        document.getElementById('current-mood-display').textContent = '😐';
+        document.getElementById('current-mood-note').textContent = 'No mood logged yet';
+        document.getElementById('mood-weekly-avg').textContent = '--';
+        document.getElementById('mood-weekly-emoji').textContent = '😐';
     }
 }
 
-// SUMMARY OF TODAY
+
+// ==================== SUMMARY OF TODAY ====================
 async function loadSummary() {
+    try {
+        const summary = await api.summary.getDaily();
 
+        // Update Health Score
+        const score = summary.healthScore || 0;
+        document.getElementById('health-score-value').textContent = score;
 
+        // Update score circle color based on score
+        const scoreCircle = document.getElementById('health-score-circle');
+        if (score >= 80) {
+            scoreCircle.style.borderColor = '#10b981'; // Green
+            document.getElementById('health-score-label').textContent = 'Excellent! 🎉';
+        } else if (score >= 60) {
+            scoreCircle.style.borderColor = '#3b82f6'; // Blue
+            document.getElementById('health-score-label').textContent = 'Good Job! 👍';
+        } else if (score >= 40) {
+            scoreCircle.style.borderColor = '#f59e0b'; // Orange
+            document.getElementById('health-score-label').textContent = 'Keep Going! 💪';
+        } else {
+            scoreCircle.style.borderColor = '#ef4444'; // Red
+            document.getElementById('health-score-label').textContent = 'Needs Improvement 📈';
+        }
+
+        // Water Summary
+        const water = summary.water;
+        document.getElementById('summary-water-text').textContent = `${water.total}ml / ${water.goal}ml`;
+        document.getElementById('summary-water-progress').style.width = `${water.percentage}%`;
+        document.getElementById('summary-water-status').textContent =
+            water.status === 'achieved' ? '✓ Achieved' : 'In Progress';
+        document.getElementById('summary-water-status').className =
+            water.status === 'achieved'
+                ? 'px-2 py-1 text-xs rounded-full bg-green-200 text-green-800'
+                : 'px-2 py-1 text-xs rounded-full bg-blue-200 text-blue-800';
+
+        // Exercise Summary
+        const exercise = summary.exercise;
+        document.getElementById('summary-exercise-text').textContent = `${exercise.total} min / ${exercise.goal} min`;
+        document.getElementById('summary-exercise-progress').style.width = `${exercise.percentage}%`;
+        document.getElementById('summary-exercise-status').textContent =
+            exercise.status === 'achieved' ? '✓ Achieved' : 'In Progress';
+        document.getElementById('summary-exercise-status').className =
+            exercise.status === 'achieved'
+                ? 'px-2 py-1 text-xs rounded-full bg-green-200 text-green-800'
+                : 'px-2 py-1 text-xs rounded-full bg-green-200 text-green-800';
+
+        // Sleep Summary
+        const sleep = summary.sleep;
+        document.getElementById('summary-sleep-text').textContent = `${sleep.average.toFixed(1)} hrs (avg)`;
+        document.getElementById('summary-sleep-status').textContent =
+            sleep.status === 'optimal' ? '✓ Optimal' : 'Needs Improvement';
+        document.getElementById('summary-sleep-status').className =
+            sleep.status === 'optimal'
+                ? 'px-2 py-1 text-xs rounded-full bg-green-200 text-green-800'
+                : 'px-2 py-1 text-xs rounded-full bg-orange-200 text-orange-800';
+
+        // Calories Summary
+        const calories = summary.calories;
+        document.getElementById('summary-calories-text').textContent = `${calories.total} kcal / ${calories.goal} kcal`;
+        document.getElementById('summary-calories-progress').style.width = `${calories.percentage}%`;
+        document.getElementById('summary-calories-status').textContent =
+            calories.status === 'good' ? '✓ Good' : '⚠ Exceeded';
+        document.getElementById('summary-calories-status').className =
+            calories.status === 'good'
+                ? 'px-2 py-1 text-xs rounded-full bg-green-200 text-green-800'
+                : 'px-2 py-1 text-xs rounded-full bg-red-200 text-red-800';
+
+        // Recommendations
+        const recommendations = summary.recommendations || [];
+        const recList = document.getElementById('recommendations-list');
+        if (recommendations.length === 0) {
+            recList.innerHTML = '<li class="text-gray-700 flex items-start gap-2"><span>🎉</span><span>Great job! All goals achieved today!</span></li>';
+        } else {
+            recList.innerHTML = recommendations.map(rec =>
+                `<li class="text-gray-700 flex items-start gap-2">
+                    <span class="mt-1">•</span>
+                    <span>${rec}</span>
+                </li>`
+            ).join('');
+        }
+
+    } catch (error) {
+        console.error('Error loading summary:', error);
+        showAlert('Error loading summary data. Make sure backend is running.', 'error');
+    }
 }
 
-//DATABASE
+// ==================== DATABASE MANAGEMENT ====================
 async function loadDatabase() {
-
-
+    await loadDatabaseStats();
 }
+
+async function loadDatabaseStats() {
+    try {
+        const stats = await api.database.getStats();
+
+        // Update counts
+        document.getElementById('db-water-count').textContent = stats.waterLogs || 0;
+        document.getElementById('db-exercise-count').textContent = stats.exerciseLogs || 0;
+        document.getElementById('db-sleep-count').textContent = stats.sleepLogs || 0;
+        document.getElementById('db-calories-count').textContent = stats.caloriesLogs || 0;
+        document.getElementById('db-mood-count').textContent = stats.moodLogs || 0;
+        document.getElementById('db-total-count').textContent = stats.totalRecords || 0;
+
+        // Update date range
+        const dateRange = `${stats.oldestRecord} to ${stats.newestRecord}`;
+        document.getElementById('db-date-range').textContent = dateRange;
+
+        console.log('✅ Database stats loaded');
+
+    } catch (error) {
+        console.error('Error loading database stats:', error);
+        showAlert('Error loading database statistics', 'error');
+    }
+}
+
+function exportCSV() {
+    try {
+        const csvUrl = api.database.exportCSV();
+        window.open(csvUrl, '_blank');
+        showAlert('CSV export started! Check your downloads folder.', 'success');
+    } catch (error) {
+        console.error('Error exporting CSV:', error);
+        showAlert('Error exporting CSV', 'error');
+    }
+}
+
+async function exportJSON() {
+    try {
+        const data = await api.database.exportJSON();
+
+        // create downloadable JSON file
+        const dataStr = JSON.stringify(data, null, 2);
+        const dataBlob = new Blob([dataStr], { type: 'application/json' });
+        const url = URL.createObjectURL(dataBlob);
+
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `fitlife_data_${new Date().toISOString().split('T')[0]}.json`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+
+        URL.revokeObjectURL(url);
+        showAlert('JSON export completed! Check your downloads folder.', 'success');
+    } catch (error) {
+        console.error('Error exporting JSON:', error);
+        showAlert('Error exporting JSON data', 'error');
+    }
+}
+
+async function cleanupOldData() {
+    const days = parseInt(document.getElementById('cleanup-days').value);
+
+    if (!days || days < 1) {
+        showAlert('Please enter a valid number of days (minimum 1)', 'error');
+        return;
+    }
+
+    const confirm = window.confirm(
+        `⚠️ Are you sure you want to delete all data older than ${days} days?\n\nThis action cannot be undone!`
+    );
+    if (!confirm) return;
+
+    try {
+        const result = await api.database.cleanup(days);
+        const totalDeleted = result.totalDeleted || 0;
+
+        showAlert(
+            `Successfully deleted ${totalDeleted} old records!\n\n` +
+            `Water: ${result.waterDeleted}\n` +
+            `Exercise: ${result.exerciseDeleted}\n` +
+            `Sleep: ${result.sleepDeleted}\n` +
+            `Calories: ${result.caloriesDeleted}\n` +
+            `Mood: ${result.moodDeleted}`,
+            'success'
+        );
+
+        await loadDatabaseStats();
+        await loadDashboard();
+    } catch (error) {
+        console.error('Error cleaning up data:', error);
+        showAlert('Error cleaning up old data', 'error');
+    }
+}
+
+async function clearAllData() {
+    // First confirmation
+    const confirm1 = window.confirm(
+        '⚠️⚠️⚠️ FINAL WARNING ⚠️⚠️⚠️\n\n' +
+        'This will DELETE ALL YOUR DATA PERMANENTLY!\n\n' +
+        '• All water logs\n' +
+        '• All exercise logs\n' +
+        '• All sleep logs\n' +
+        '• All calories logs\n' +
+        '• All mood logs\n\n' +
+        'This action CANNOT be undone!\n\n' +
+        'Are you ABSOLUTELY SURE you want to continue?'
+    );
+
+    if (!confirm1) {
+        showAlert('Deletion cancelled. Your data is safe.', 'success');
+        return;
+    }
+
+    // Second confirmation - must type exact text
+    const confirm2 = window.prompt(
+        '⚠️ FINAL CONFIRMATION ⚠️\n\n' +
+        'To confirm deletion of ALL data, type exactly:\n\n' +
+        'DELETE_ALL_DATA\n\n' +
+        '(case sensitive)'
+    );
+
+    if (confirm2 !== 'DELETE_ALL_DATA') {
+        showAlert('Incorrect confirmation text. Deletion cancelled.', 'error');
+        return;
+    }
+
+    try {
+        await api.database.clearAll('DELETE_ALL_DATA');
+        showAlert(
+            '✅ All data has been permanently deleted!\n\n' +
+            'The database is now empty. You can start fresh.',
+            'success'
+        );
+
+        // Refresh all displays
+        await loadDatabaseStats();
+        await loadDashboard();
+
+        // Clear localStorage
+        localStorage.removeItem('waterGoal');
+
+    } catch (error) {
+        console.error('Error clearing all data:', error);
+        showAlert('Error clearing all data. Please try again.', 'error');
+    }
+}
+
 
 // ==================== INITIALIZATION ====================
 // Load dashboard on page load

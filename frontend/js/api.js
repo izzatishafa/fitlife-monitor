@@ -6,12 +6,26 @@ const api = {
     async get(endpoint) {
         try {
             const response = await fetch(`${API_BASE_URL}${endpoint}`);
-            if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+
+            // Handle 204 No Content
+            if (response.status === 204) {
+                return null;
+            }
+
+            // Handle 404 Not Found
+            if (response.status === 404) {
+                return null;
+            }
+
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+
             return await response.json();
         } catch (error) {
             console.error('GET Error:', error);
-            showAlert('Error loading data. Please check if the backend is running.', 'error');
-            throw error;
+            // Return null instead of throwing - let caller handle it
+            return null;
         }
     },
     // Generic POST request
