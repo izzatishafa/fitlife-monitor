@@ -2,6 +2,11 @@
 
 function showTab(tabName) {
 
+    const lastBMI = localStorage.getItem("lastBMI");
+    if (lastBMI) {
+        document.getElementById('dashboard-bmi').textContent = lastBMI;
+    }
+
     // Hide ALL tabs
     document.querySelectorAll('.tab-content').forEach(tab => {
         tab.classList.add('hidden');
@@ -130,6 +135,22 @@ async function loadDashboard() {
             document.getElementById('dashboard-mood-avg').textContent =
                 `Weekly avg: ${avgMood.toFixed(1)} ${moodEmojis[Math.round(avgMood)] || '😐'}`;
         }
+
+        // Load BMI
+        const savedBMI = localStorage.getItem("lastBMI");
+        const savedCategory = localStorage.getItem("lastBMICategory");
+        const savedClass = localStorage.getItem("lastBMICategoryClass");
+
+        if (savedBMI) {
+            document.getElementById("dashboard-bmi").textContent = savedBMI;
+        }
+
+        if (savedCategory) {
+            const dashCat = document.getElementById("dashboard-bmi-category");
+            dashCat.textContent = savedCategory;
+            dashCat.className = `text-sm font-medium ${savedClass}`;
+        }
+
 
     } catch (error) {
         console.error('Error loading dashboard:', error);
@@ -402,49 +423,206 @@ async function deleteSleep(id) {
     }
 }
 
-// ==================== BMI CALCULATOR ====================
-function calculateBMI() {
-    const height = parseFloat(document.getElementById('bmi-height').value);
-    const weight = parseFloat(document.getElementById('bmi-weight').value);
 
-    if (!height || !weight || height <= 0 || weight <= 0) {
-        showAlert('Please enter valid height and weight', 'error');
+// ==================== BMI CALCULATOR ====================
+let selectedSex = null;
+
+function selectSex(sex) {
+    selectedSex = sex;
+
+    // style button active (opsional)
+    document.getElementById("btn-male").classList.toggle("border-orange-500", sex === "male");
+    document.getElementById("btn-female").classList.toggle("border-orange-500", sex === "female");
+
+    // Visual feedback
+    document.getElementById('btn-male').className =
+        sex === 'male'
+            ? 'flex-1 w-[120px] py-1.5 border-2 border-orange-500 bg-orange-100 rounded-full transition-all'
+            : 'flex-1 w-[120px] py-1.5 border-2 border-gray-300 rounded-full hover:border-orange-500 transition-all';
+
+    document.getElementById('btn-female').className =
+        sex === 'female'
+            ? 'flex-1 w-[120px] py-1.5 border-2 border-orange-500 bg-orange-100 rounded-full transition-all'
+            : 'flex-1 w-[120px] py-1.5 border-2 border-gray-300 rounded-full hover:border-orange-500 transition-all';
+}
+
+function validateAge() {
+    const ageInput = document.getElementById('bmi-age');
+    const ageError = document.getElementById('age-error');
+    const age = parseInt(ageInput.value);
+
+    if (age < 1 || age > 120 || !age) {
+        ageInput.classList.remove('border-gray-300');
+        ageInput.classList.add('border-red-500', 'bg-red-50');
+        ageError.classList.remove('hidden');
+        return false;
+    } else {
+        ageInput.classList.remove('border-red-500', 'bg-red-50');
+        ageInput.classList.add('border-gray-300');
+        ageError.classList.add('hidden');
+        return true;
+    }
+}
+
+function validateHeight() {
+    const heightInput = document.getElementById('bmi-height');
+    const heightError = document.getElementById('height-error');
+    const height = parseFloat(heightInput.value);
+
+    if (height < 50 || height > 250 || !height) {
+        heightInput.classList.remove('border-gray-300');
+        heightInput.classList.add('border-red-500', 'bg-red-50');
+        heightError.classList.remove('hidden');
+        return false;
+    } else {
+        heightInput.classList.remove('border-red-500', 'bg-red-50');
+        heightInput.classList.add('border-gray-300');
+        heightError.classList.add('hidden');
+        return true;
+    }
+}
+
+function validateWeight() {
+    const weightInput = document.getElementById('bmi-weight');
+    const weightError = document.getElementById('weight-error');
+    const weight = parseFloat(weightInput.value);
+
+    if (weight < 20 || weight > 300 || !weight) {
+        weightInput.classList.remove('border-gray-300');
+        weightInput.classList.add('border-red-500', 'bg-red-50');
+        weightError.classList.remove('hidden');
+        return false;
+    } else {
+        weightInput.classList.remove('border-red-500', 'bg-red-50');
+        weightInput.classList.add('border-gray-300');
+        weightError.classList.add('hidden');
+        return true;
+    }
+}
+
+
+function calculateBMI() {
+    // Ambil value dari semua input
+    const sex = selectedSex;
+    const ageInput = document.getElementById('bmi-age');
+    const heightInput = document.getElementById('bmi-height');
+    const weightInput = document.getElementById('bmi-weight');
+
+    const age = parseInt(ageInput.value);
+    const height = parseFloat(heightInput.value);
+    const weight = parseFloat(weightInput.value);
+
+    // --- CEK INPUT KOSONG ---
+    if (!sex || !ageInput.value || !heightInput.value || !weightInput.value) {
+        let missingFields = [];
+
+        if (!sex) missingFields.push("sex");
+        if (!ageInput.value) missingFields.push("age");
+        if (!heightInput.value) missingFields.push("height");
+        if (!weightInput.value) missingFields.push("weight");
+
+        showAlert(
+            `Please fill in: ${missingFields.join(", ")}`,
+            'error'
+        );
         return;
     }
 
-    // Calculate BMI
+    // --- VALIDATE FIELDS ---
+    const isAgeValid = validateAge();
+    const isHeightValid = validateHeight();
+    const isWeightValid = validateWeight();
+
+    if (!isAgeValid || !isHeightValid || !isWeightValid) {
+        showAlert(
+            'Please correct the highlighted errors before calculating BMI.',
+            'error'
+        );
+        return;
+    }
+
+    // --- PERHITUNGAN BMI ---
     const heightInMeters = height / 100;
     const bmi = (weight / (heightInMeters * heightInMeters)).toFixed(1);
 
-    // Determine category
-    let category, categoryClass;
+    let category, categoryClass, advice;
+
     if (bmi < 18.5) {
         category = 'Underweight';
         categoryClass = 'text-blue-600';
+        advice = 'Consider consulting a nutritionist for a healthy weight gain plan.';
     } else if (bmi < 25) {
         category = 'Normal';
         categoryClass = 'text-green-600';
+        advice = 'Great! Maintain your healthy lifestyle and regular exercise.';
     } else if (bmi < 30) {
         category = 'Overweight';
         categoryClass = 'text-yellow-600';
+        advice = 'Consider increasing physical activity and monitoring your diet.';
     } else {
         category = 'Obese';
         categoryClass = 'text-red-600';
+        advice = 'We recommend consulting a healthcare professional for guidance.';
     }
 
-    // Display result
+    // --- TAMPILKAN HASIL ---
     document.getElementById('bmi-value').textContent = bmi;
-    document.getElementById('bmi-category').textContent = category;
-    document.getElementById('bmi-category').className = `text-xl font-semibold ${categoryClass}`;
+
+    const categoryText = document.getElementById('bmi-category');
+    categoryText.textContent = category;
+    categoryText.className = `text-xl font-semibold ${categoryClass}`;
+
+    document.getElementById('bmi-info').innerHTML = `
+        <p class="text-gray-700"><strong>Sex:</strong> ${selectedSex === 'male' ? 'Male ♂' : 'Female ♀'}</p>
+        <p class="text-gray-700"><strong>Age:</strong> ${age} years</p>
+        <p class="text-gray-700"><strong>Height:</strong> ${height} cm</p>
+        <p class="text-gray-700"><strong>Weight:</strong> ${weight} kg</p>
+        <p class="text-gray-600 mt-3 italic">${advice}</p>
+    `;
+
     document.getElementById('bmi-result').classList.remove('hidden');
 
-    // Update dashboard
+    // --- DASHBOARD UPDATE ---
     document.getElementById('dashboard-bmi').textContent = bmi;
+
+    const dashboardCategory = document.getElementById('dashboard-bmi-category');
+    dashboardCategory.textContent = category;
+    dashboardCategory.className = `text-sm font-medium ${categoryClass}`;
+
+    // --- LOCAL STORAGE (BMI + CATEGORY + CLASS) ---
+    localStorage.setItem("lastBMI", bmi);
+    localStorage.setItem("lastBMICategory", category);
+    localStorage.setItem("lastBMICategoryClass", categoryClass);
+
+    showAlert('BMI calculated successfully!', 'success');
 }
 
+
 function clearBMI() {
+    // Clear inputs
+    document.getElementById('bmi-age').value = '';
     document.getElementById('bmi-height').value = '';
     document.getElementById('bmi-weight').value = '';
+
+    // Reset sex selection
+    selectedSex = null;
+    document.getElementById('btn-male').className = 'flex-1 py-3 px-6 border-2 border-gray-300 rounded-lg hover:border-orange-500 transition-all';
+    document.getElementById('btn-female').className = 'flex-1 py-3 px-6 border-2 border-gray-300 rounded-lg hover:border-orange-500 transition-all';
+
+    // Remove error states
+    const inputs = ['bmi-age', 'bmi-height', 'bmi-weight'];
+    inputs.forEach(id => {
+        const input = document.getElementById(id);
+        input.classList.remove('border-red-500', 'bg-red-50');
+        input.classList.add('border-gray-300');
+    });
+
+    // Hide error messages
+    document.getElementById('age-error').classList.add('hidden');
+    document.getElementById('height-error').classList.add('hidden');
+    document.getElementById('weight-error').classList.add('hidden');
+
+    // Hide result
     document.getElementById('bmi-result').classList.add('hidden');
 }
 
