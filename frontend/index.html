@@ -19,7 +19,7 @@
 <body class="bg-gradient-to-br from-white to-cyan-100 min-h-screen">
 
     <!-- Header -->
-    <header class="flex bg-cyan-900 shadow-md">
+    <header class="flex bg-cyan-900 shadow-md sticky top-0 z-10">
         <div class="container mx-auto px-6 py-6">
             <h1 class="text-3xl font-bold text-white flex items-center gap-2">
                 <i class="fas fa-heartbeat"></i>
@@ -34,7 +34,7 @@
     </header>
 
     <!-- Navigation -->
-    <nav class="bg-white shadow-sm sticky top-0 z-10">
+    <nav class="bg-white shadow-sm sticky top-[108px] z-10">
         <div class="container mx-auto px-4">
             <div class="flex justify-center gap-1 overflow-x-auto">
                 <button onclick="showTab('dashboard')"
@@ -118,7 +118,6 @@
                                 <p id="c-time" class="text-xl font-bold text-gray-900">--:--:--</p>
                                 <p id="c-day" class="text-sm text-gray-600">---</p>
                             </div>
-
                         </div>
                     </div>
 
@@ -201,6 +200,7 @@
                             <div>
                                 <p class="text-gray-600 text-sm">BMI</p>
                                 <p id="dashboard-bmi" class="text-2xl font-bold">--</p>
+                                <p id="dashboard-bmi-category" class="text-sm text-gray-500"></p>
                             </div>
                         </div>
                     </div>
@@ -253,7 +253,7 @@
         <!-- WATER TAB -->
         <div id="water-tab" class="tab-content hidden">
             <div class="bg-white p-6 space-y-6 rounded-xl shadow-lg">
-                <h2 class="text-2xl font-bold text-blue-600 flex items-center gap-2">
+                <h2 class="text-xl font-bold text-blue-600 flex items-center gap-2">
                     <i class="fas fa-tint"></i> Water Intake Tracker
                 </h2>
 
@@ -291,7 +291,7 @@
         <!-- EXERCISE TAB -->
         <div id="exercise-tab" class="tab-content hidden">
             <div class="bg-white p-6 rounded-xl shadow-lg space-y-6">
-                <h2 class="text-2xl font-bold text-green-600 flex items-center gap-2">
+                <h2 class="text-xl font-bold text-green-600 flex items-center gap-2">
                     <i class="fas fa-running"></i> Exercise Logger
                 </h2>
 
@@ -340,7 +340,7 @@
         <!-- SLEEP TAB -->
         <div id="sleep-tab" class="tab-content hidden">
             <div class="bg-white p-6 rounded-xl shadow-lg space-y-6">
-                <h2 class="text-2xl font-bold text-purple-600 flex items-center gap-2">
+                <h2 class="text-xl font-bold text-purple-600 flex items-center gap-2">
                     <i class="fas fa-moon"></i> Sleep Tracker
                 </h2>
 
@@ -381,37 +381,126 @@
         <!-- BMI TAB -->
         <div id="bmi-tab" class="tab-content hidden">
             <div class="bg-white p-6 rounded-xl shadow-lg space-y-6">
-                <h2 class="text-2xl font-bold text-orange-600 flex items-center gap-2">
+                <h2 class="text-xl font-bold text-orange-600 flex items-center gap-2">
                     <i class="fas fa-calculator"></i> BMI Calculator
                 </h2>
 
-                <div class="p-4 bg-orange-50 rounded-lg space-y-4">
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div>
-                            <label class="text-sm">Height (cm)</label>
-                            <input id="bmi-height" type="number" class="w-full px-4 py-2 border rounded-lg"
-                                placeholder="170">
-                        </div>
-
-                        <div>
-                            <label class="text-sm">Weight (kg)</label>
-                            <input id="bmi-weight" type="number" class="w-full px-4 py-2 border rounded-lg"
-                                placeholder="70">
+                <!-- Input Form - 4 Cards -->
+                <div class="grid grid-cols-2 mb-8 px-20">
+                    <!-- Card 1: Sex -->
+                    <div class="p-6 bg-white rounded-xl shadow-md border-2 border-gray-200 m-5">
+                        <label class="block text-md font-semibold text-gray-800 mb-3">
+                            <i class="fas fa-venus-mars text-orange-600 mr-2"></i>
+                            What is your sex?
+                        </label>
+                        <div class="flex justify-center gap-4 w-full">
+                            <div class="flex items-center flex-col gap-4">
+                                <div>
+                                    <img src="assets/picts/male.png" alt="kaga mau tampil nih" class="w-20 rounded-full">
+                                </div>
+                                <button type="button" onclick="selectSex('male')" id="btn-male"
+                                    class="flex-1 w-[120px] py-1.5 border-2 border-gray-300 rounded-full hover:border-orange-500 transition-all">
+                                    <p class="text-sm font-bold">Male</p>
+                                </button>
+                            </div>
+                            <div class="flex items-center flex-col gap-4">
+                                <div>
+                                    <img src="assets/picts/female.png" alt="kaga mau tampil nih"
+                                        class="w-20 rounded-full">
+                                </div>
+                                <button type="button" onclick="selectSex('female')" id="btn-female"
+                                    class="flex-1 w-[120px] py-1.5 border-2 border-gray-300 rounded-full hover:border-orange-500 transition-all">
+                                    <p class="text-sm font-bold">Female</p>
+                                </button>
+                            </div>
                         </div>
                     </div>
 
-                    <div class="flex gap-3">
-                        <button onclick="calculateBMI()" class="bg-orange-600 text-white px-6 py-2 rounded-lg">Calculate
-                            BMI</button>
-                        <button onclick="clearBMI()" class="bg-gray-600 text-white px-6 py-2 rounded-lg">Clear</button>
+                    <!-- Card 2: Age -->
+                    <div class="p-6 bg-white rounded-xl shadow-md border-2 border-gray-200 m-5">
+                        <label class="block text-md font-semibold text-gray-800 mb-3">
+                            <i class="fas fa-birthday-cake text-orange-600 mr-2"></i>
+                            How old are you?
+                        </label>
+                        <div class="flex justify-center items-center gap-3 mt-10">
+                            <input type="number" id="bmi-age" placeholder="21" min="1" max="120" oninput="validateAge()"
+                                class="w-24 text-4xl font-semibold text-center border-b-2 border-black focus:outline-none appearance-none placeholder-gray-200">
+                            <span class="text-xl text-gray-600">Years</span>
+                        </div>
+                        <p id="age-error" class="hidden mt-2 text-sm text-red-600 text-center">
+                            <i class="fas fa-exclamation-circle"></i>
+                            Age must be between 1 and 120 years
+                        </p>
+                    </div>
+
+                    <!-- Card 3: Height -->
+                    <div class="p-6 bg-white rounded-xl shadow-md border-2 border-gray-200 m-5">
+                        <label class="block text-md font-semibold text-gray-800 mb-3">
+                            <i class="fas fa-ruler-vertical text-orange-600 mr-2"></i>
+                            How tall are you?
+                        </label>
+                        <div class="flex justify-center items-center gap-3 my-10">
+                            <input type="number" id="bmi-height" placeholder="170" min="50" max="250" step="0.1"
+                                oninput="validateHeight()"
+                                class="w-24 text-4xl font-semibold text-center border-b-2 border-black focus:outline-none appearance-none placeholder-gray-200">
+                            <span class="text-xl text-gray-600">cm</span>
+                        </div>
+                        <p id="height-error" class="hidden mt-2 text-sm text-red-600">
+                            <i class="fas fa-exclamation-circle"></i>
+                            Height must be between 50 and 250 cm
+                        </p>
+                    </div>
+
+                    <!-- Card 4: Weight -->
+                    <div class="p-6 bg-white rounded-xl shadow-md border-2 border-gray-200 m-5">
+                        <label class="block text-md font-semibold text-gray-800 mb-3">
+                            <i class="fas fa-weight text-orange-600 mr-2"></i>
+                            How much do you weight?
+                        </label>
+                        <div class="flex justify-center items-center gap-3 my-10">
+                            <input type="number" id="bmi-weight" placeholder="70" min="20" max="300" step="0.1"
+                                oninput="validateWeight()"
+                                class="w-24 text-4xl font-semibold text-center border-b-2 border-black focus:outline-none appearance-none placeholder-gray-200">
+                            <span class="text-xl text-gray-600">kg</span>
+                        </div>
+                        <p id="weight-error" class="hidden mt-2 text-sm text-red-600 text-center">
+                            <i class="fas fa-exclamation-circle"></i>
+                            Weight must be between 20 and 300 kg
+                        </p>
+                    </div>
+
+                </div>
+                <!-- Calculate & Clear Buttons -->
+                <div class="flex justify-center gap-4 mt-6">
+                    <div>
+                        <button onclick="calculateBMI()"
+                            class="flex-1 bg-orange-600 text-white px-16 py-2 rounded-full hover:bg-orange-700 transition-colors font-semibold text-md flex items-center justify-center gap-2">
+                            <i class="fas fa-calculator"></i>
+                            Calculate BMI
+                        </button>
+                        <div id="bmi-warning"
+                            class="hidden px-4 py-3 bg-red-100 text-red-700 border border-red-300 rounded-lg text-center font-semibold">
+                        </div>
+
+                    </div>
+                    <div>
+                        <button onclick="clearBMI()"
+                            class="bg-gray-600 text-white px-6 py-2 rounded-full hover:bg-gray-700 transition-colors font-semibold text-md flex items-center justify-center gap-2">
+                            <i class="fas fa-redo"></i>
+                            Clear
+                        </button>
                     </div>
                 </div>
-
-                <div id="bmi-result" class="hidden p-6 bg-gradient-to-r from-orange-50 to-yellow-50 rounded-lg">
-                    <h3 class="text-lg font-semibold">Your BMI Result</h3>
-                    <div class="text-center my-4">
-                        <p id="bmi-value" class="text-5xl font-bold text-orange-600">--</p>
+                <!-- Result Section -->
+                <div id="bmi-result" class="hidden p-6 bg-gradient-to-r from-orange-50 to-yellow-50 rounded-lg mb-6">
+                    <h3 class="text-lg font-semibold text-gray-800 mb-4">Your BMI Result</h3>
+                    <div class="text-center mb-4">
+                        <p id="bmi-value" class="text-5xl font-bold text-orange-600 mb-2">--</p>
                         <p id="bmi-category" class="text-xl font-semibold">--</p>
+                    </div>
+
+                    <div id="bmi-info" class="mt-4 p-4 bg-white rounded-lg space-y-1">
+                        <!-- Info will be inserted here by JavaScript -->
                     </div>
                 </div>
 
@@ -438,7 +527,7 @@
         <div id="calories-tab" class="tab-content">
             <div class="space-y-6">
                 <div class="bg-white rounded-xl shadow-lg p-6">
-                    <h2 class="text-2xl font-bold text-yellow-600 mb-6 flex items-center gap-2">
+                    <h2 class="text-xl font-bold text-yellow-600 mb-6 flex items-center gap-2">
                         <i class="fas fa-utensils"></i>
                         Calories Tracker
                     </h2>
@@ -474,7 +563,8 @@
                     <div class="mb-6">
                         <div class="flex justify-between mb-2">
                             <span class="text-sm font-medium text-gray-700">Today's Progress</span>
-                            <span id="calories-progress-text" class="text-sm font-medium text-yellow-600">0 kcal / 2000
+                            <span id="calories-progress-text" class="text-sm font-medium text-yellow-600">0 kcal /
+                                2000
                                 kcal</span>
                         </div>
                         <div class="w-full bg-gray-200 rounded-full h-4">
@@ -482,7 +572,8 @@
                                 class="bg-gradient-to-r from-yellow-400 to-yellow-600 h-4 rounded-full transition-all"
                                 style="width: 0%"></div>
                         </div>
-                        <p id="calories-status" class="text-sm text-gray-600 mt-2">You can still eat 2000 kcal today</p>
+                        <p id="calories-status" class="text-sm text-gray-600 mt-2">You can still eat 2000 kcal today
+                        </p>
                     </div>
 
                     <!-- Today's Logs -->
@@ -498,7 +589,7 @@
         <div id="mood-tab" class="tab-content">
             <div class="space-y-6">
                 <div class="bg-white rounded-xl shadow-lg p-6">
-                    <h2 class="text-2xl font-bold text-pink-600 mb-6 flex items-center gap-2">
+                    <h2 class="text-xl font-bold text-pink-600 mb-6 flex items-center gap-2">
                         <i class="fas fa-smile"></i>
                         Mood Tracker
                     </h2>
@@ -527,7 +618,8 @@
                         </div>
 
                         <div class="mb-4">
-                            <label class="block text-sm font-medium text-gray-700 mb-2">Add a note (optional)</label>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Add a note
+                                (optional)</label>
                             <textarea id="mood-note" rows="3" placeholder="What made you feel this way?"
                                 class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:outline-none"></textarea>
                         </div>
@@ -561,7 +653,7 @@
         <div id="summary-tab" class="tab-content">
             <div class="space-y-6">
                 <div class="bg-white rounded-xl shadow-lg p-6">
-                    <h2 class="text-2xl font-bold text-indigo-600 mb-6 flex items-center gap-2">
+                    <h2 class="text-xl font-bold text-indigo-600 mb-6 flex items-center gap-2">
                         <i class="fas fa-chart-line"></i>
                         Summary of Today
                     </h2>
@@ -578,7 +670,8 @@
                                 </div>
                             </div>
                         </div>
-                        <p id="health-score-label" class="mt-4 text-lg font-medium text-gray-700">Getting Started</p>
+                        <p id="health-score-label" class="mt-4 text-lg font-medium text-gray-700">Getting Started
+                        </p>
                     </div>
 
                     <!-- Detailed Metrics -->
@@ -591,7 +684,8 @@
                                     Water
                                 </h4>
                                 <span id="summary-water-status"
-                                    class="px-2 py-1 text-xs rounded-full bg-blue-200 text-blue-800">In Progress</span>
+                                    class="px-2 py-1 text-xs rounded-full bg-blue-200 text-blue-800">In
+                                    Progress</span>
                             </div>
                             <p id="summary-water-text" class="text-2xl font-bold text-gray-800">0ml / 2000ml</p>
                             <div class="w-full bg-blue-200 rounded-full h-2 mt-2">
@@ -611,7 +705,8 @@
                                     class="px-2 py-1 text-xs rounded-full bg-green-200 text-green-800">In
                                     Progress</span>
                             </div>
-                            <p id="summary-exercise-text" class="text-2xl font-bold text-gray-800">0 min / 30 min</p>
+                            <p id="summary-exercise-text" class="text-2xl font-bold text-gray-800">0 min / 30 min
+                            </p>
                             <div class="w-full bg-green-200 rounded-full h-2 mt-2">
                                 <div id="summary-exercise-progress" class="bg-green-600 h-2 rounded-full transition-all"
                                     style="width: 0%"></div>
@@ -641,7 +736,8 @@
                                 <span id="summary-calories-status"
                                     class="px-2 py-1 text-xs rounded-full bg-yellow-200 text-yellow-800">Good</span>
                             </div>
-                            <p id="summary-calories-text" class="text-2xl font-bold text-gray-800">0 kcal / 2000 kcal
+                            <p id="summary-calories-text" class="text-2xl font-bold text-gray-800">0 kcal / 2000
+                                kcal
                             </p>
                             <div class="w-full bg-yellow-200 rounded-full h-2 mt-2">
                                 <div id="summary-calories-progress"
@@ -675,7 +771,7 @@
         <div id="database-tab" class="tab-content">
             <div class="space-y-6">
                 <div class="bg-white rounded-xl shadow-lg p-6">
-                    <h2 class="text-2xl font-bold text-gray-800 mb-6 flex items-center gap-2">
+                    <h2 class="text-xl font-bold text-gray-800 mb-6 flex items-center gap-2">
                         <i class="fas fa-database"></i>
                         Database Management
                     </h2>
