@@ -6,7 +6,7 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -25,11 +25,11 @@ import com.fitlife.repository.UserRepository;
 public class AuthController {
 
     private final UserRepository userRepository;
-    private final BCryptPasswordEncoder passwordEncoder;
+    private final PasswordEncoder passwordEncoder;
 
     public AuthController(
             UserRepository userRepository,
-            BCryptPasswordEncoder passwordEncoder) {
+            PasswordEncoder passwordEncoder) {
 
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
@@ -71,8 +71,7 @@ public class AuthController {
         user.setEmail(data.get("email"));
 
         // 🔐 HASH PASSWORD
-        String hashedPassword = passwordEncoder.encode(data.get("password"));
-        user.setPassword(hashedPassword);
+        user.setPassword(passwordEncoder.encode(data.get("password")));
 
         // ================= DEBUG =================
         System.out.println("=== REGISTER DEBUG ===");
