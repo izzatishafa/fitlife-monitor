@@ -13,6 +13,7 @@ import com.fitlife.model.ExerciseLog;
 public interface ExerciseRepository extends JpaRepository<ExerciseLog, Long> {
 
     List<ExerciseLog> findByDateOrderByTimeDesc(LocalDate date);
+    long deleteByDateBefore(LocalDate date);
 
     List<ExerciseLog> findTop20ByOrderByDateDescTimeDesc();
 

@@ -13,6 +13,7 @@ import com.fitlife.model.WaterLog;
 public interface WaterRepository extends JpaRepository<WaterLog, Long> {
 
     List<WaterLog> findByDateOrderByTimeDesc(LocalDate date);
+    long deleteByDateBefore(LocalDate date);
 
     @Query("SELECT SUM(w.amount) FROM WaterLog w WHERE w.date = :date")
     Integer getTotalByDate(LocalDate date);

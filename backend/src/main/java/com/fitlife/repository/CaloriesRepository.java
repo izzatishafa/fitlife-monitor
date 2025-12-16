@@ -13,6 +13,7 @@ import com.fitlife.model.CaloriesLog;
 public interface CaloriesRepository extends JpaRepository<CaloriesLog, Long> {
     
     List<CaloriesLog> findByDateOrderByTimeDesc(LocalDate date);
+    long deleteByDateBefore(LocalDate date);
     
     @Query("SELECT SUM(c.calories) FROM CaloriesLog c WHERE c.date = :date")
     Integer getTotalByDate(LocalDate date);

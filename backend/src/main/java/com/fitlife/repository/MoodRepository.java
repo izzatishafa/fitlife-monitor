@@ -14,6 +14,7 @@ import com.fitlife.model.MoodLog;
 public interface MoodRepository extends JpaRepository<MoodLog, Long> {
     
     Optional<MoodLog> findByDate(LocalDate date);
+    long deleteByDateBefore(LocalDate date);
     
     List<MoodLog> findTop7ByOrderByDateDesc();
     
