@@ -1,4 +1,3 @@
-/* Custom Styles */
 * {
     margin: 0;
     padding: 0;
@@ -9,25 +8,26 @@ body {
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 }
 
-/* Tab Navigation */
 .tab-btn {
     border: none;
     background: transparent;
     cursor: pointer;
     color: #6b7280;
-    border-bottom: 2px solid transparent;
 }
 
 .tab-btn:hover {
-    color: #164e63;
+    color: #2d0c60;
 }
 
 .tab-btn.active {
-    color: #164e63;
-    border-bottom-color: #164e63;
+    color: #2d0c60;
+    border-bottom-color: #2d0c60;
+    font-size: 15px;
+    font-weight: 600;
+    background-color: white;
+    border-radius: 10px;
 }
 
-/* Tab Content */
 .tab-content {
     display: none;
     animation: fadeIn 0.3s ease-in;
@@ -70,7 +70,6 @@ body {
     }
 }
 
-/* Custom Scrollbar */
 ::-webkit-scrollbar {
     width: 8px;
 }
@@ -89,7 +88,6 @@ body {
     background: #555;
 }
 
-/* Alert Messages */
 .alert {
     padding: 12px 16px;
     border-radius: 8px;
@@ -121,7 +119,6 @@ body {
     }
 }
 
-/* Button Hover Effects */
 button {
     transition: all 0.2s ease;
 }
@@ -130,13 +127,11 @@ button:active {
     transform: scale(0.98);
 }
 
-/* Input Focus Effects */
 input:focus,
 select:focus {
     box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
 }
 
-/* Card Hover Effects */
 .card-hover {
     transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
@@ -148,17 +143,58 @@ select:focus {
 
 input[type="number"]::-webkit-inner-spin-button,
 input[type="number"]::-webkit-outer-spin-button {
-  -webkit-appearance: none;
-  margin: 0;
+    -webkit-appearance: none;
+    margin: 0;
 }
+
 input:focus {
     outline: none !important;
     box-shadow: none !important;
 }
 
+.swal-small {
+  font-size: 0.85rem;
+}
+
+.swal-small .swal2-title {
+  font-size: 25px;
+}
+
+.swal-small .swal2-html-container {
+  font-size: 0.85rem;
+}
+
+.swal-small .swal2-confirm,
+.swal-small .swal2-cancel {
+  font-size: 0.85rem;
+  padding: 0.4rem 1rem;
+}
+
+/* Search Modal Animation */
+@keyframes fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-in {
+  animation: fade-in 0.3s ease-out;
+}
+
+.search-filter {
+  transition: all 0.2s ease;
+}
+
+.search-filter:hover {
+  transform: translateY(-1px);
+}
 
 
-/* Responsive Design */
 @media (max-width: 768px) {
     .container {
         padding-left: 16px;
