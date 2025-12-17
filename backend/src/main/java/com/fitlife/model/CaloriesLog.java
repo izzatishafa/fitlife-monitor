@@ -18,6 +18,10 @@ public class CaloriesLog {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    // ✨ ADD THIS - Foreign key to users table
+    @Column(name = "user_id", nullable = false)
+    private Long userId;
+
     @Column(nullable = false)
     private String foodName;
 
@@ -34,7 +38,8 @@ public class CaloriesLog {
     public CaloriesLog() {
     }
 
-    public CaloriesLog(String foodName, Integer calories, LocalDate date, LocalTime time) {
+    public CaloriesLog(Long userId, String foodName, Integer calories, LocalDate date, LocalTime time) {
+        this.userId = userId;
         this.foodName = foodName;
         this.calories = calories;
         this.date = date;
@@ -48,6 +53,15 @@ public class CaloriesLog {
 
     public void setId(Long id) {
         this.id = id;
+    }
+
+    // ✨ ADD userId getter/setter
+    public Long getUserId() {
+        return userId;
+    }
+
+    public void setUserId(Long userId) {
+        this.userId = userId;
     }
 
     public String getFoodName() {

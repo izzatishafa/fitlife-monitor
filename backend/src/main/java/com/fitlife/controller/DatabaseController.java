@@ -1,11 +1,5 @@
 package com.fitlife.controller;
 
-import com.fitlife.repository.CaloriesRepository;
-import com.fitlife.repository.ExerciseRepository;
-import com.fitlife.repository.MoodRepository;
-import com.fitlife.repository.SleepRepository;
-import com.fitlife.repository.WaterRepository;
-
 import java.io.ByteArrayOutputStream;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
@@ -20,16 +14,24 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.CrossOrigin;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.bind.annotation.CrossOrigin;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
 
-
+import com.fitlife.model.CaloriesLog;
+import com.fitlife.model.ExerciseLog;
 import com.fitlife.model.MoodLog;
+import com.fitlife.model.SleepLog;
+import com.fitlife.model.WaterLog;
+import com.fitlife.repository.CaloriesRepository;
+import com.fitlife.repository.ExerciseRepository;
+import com.fitlife.repository.MoodRepository;
+import com.fitlife.repository.SleepRepository;
+import com.fitlife.repository.WaterRepository;
 import com.fitlife.service.CaloriesService;
 import com.fitlife.service.ExerciseService;
 import com.fitlife.service.MoodService;
@@ -76,23 +78,23 @@ public class DatabaseController {
 
     // Get database statistics
     @GetMapping("/stats")
-    public Map<String, Object> getDatabaseStats() {
+    public Map<String, Object> getDatabaseStats(@RequestParam Long userId) {
         Map<String, Object> stats = new HashMap<>();
 
-        stats.put("waterLogs", waterRepository.count());
-        stats.put("exerciseLogs", exerciseRepository.count());
-        stats.put("sleepLogs", sleepRepository.count());
-        stats.put("caloriesLogs", caloriesRepository.count());
-        stats.put("moodLogs", moodRepository.count());
-        stats.put("totalRecords",
-                waterRepository.count() +
-                        exerciseRepository.count() +
-                        sleepRepository.count() +
-                        caloriesRepository.count() +
-                        moodRepository.count());
+        long water = waterRepository.countByUserId(userId);
+        long exercise = exerciseRepository.countByUserId(userId);
+        long sleep = sleepRepository.countByUserId(userId);
+        long calories = caloriesRepository.countByUserId(userId);
+        long mood = moodRepository.countByUserId(userId);
 
-        // Calculate date range
-        stats.put("oldestRecord", getOldestRecordDate());
+        stats.put("waterLogs", water);
+        stats.put("exerciseLogs", exercise);
+        stats.put("sleepLogs", sleep);
+        stats.put("caloriesLogs", calories);
+        stats.put("moodLogs", mood);
+        stats.put("totalRecords", water + exercise + sleep + calories + mood);
+
+        stats.put("oldestRecord", getOldestRecordDate(userId));
         stats.put("newestRecord", LocalDate.now().toString());
 
         return stats;
@@ -100,7 +102,7 @@ public class DatabaseController {
 
     // Export dashboard as PDF
     @GetMapping("/export/pdf")
-    public ResponseEntity<byte[]> exportDashboardToPdf() {
+    public ResponseEntity<byte[]> exportDashboardToPdf(@RequestParam Long userId) {
         try {
             ByteArrayOutputStream out = new ByteArrayOutputStream();
             Document document = new Document(PageSize.A4);
@@ -130,11 +132,11 @@ public class DatabaseController {
             document.add(date);
 
             // Get data
-            Integer waterToday = waterService.getTodayTotal();
-            Integer exerciseToday = exerciseService.getTodayTotal();
-            Double avgSleep = sleepService.getAverageHours();
-            Integer caloriesToday = caloriesService.getTodayTotal();
-            Optional<MoodLog> todayMood = moodService.getTodayMood();
+            Integer waterToday = waterService.getTodayTotal(userId);
+            Integer exerciseToday = exerciseService.getTodayTotal(userId);
+            Double avgSleep = sleepService.getAverageHours(userId);
+            Integer caloriesToday = caloriesService.getTodayTotal(userId);
+            Optional<MoodLog> todayMood = moodService.getTodayMood(userId);
             int healthScore = calculateHealthScore(waterToday, exerciseToday, avgSleep, caloriesToday,
                     todayMood.map(MoodLog::getMood).orElse(3));
 
@@ -247,179 +249,166 @@ public class DatabaseController {
 
     // Export all data as CSV
     @GetMapping("/export/csv")
-    public ResponseEntity<String> exportToCSV() {
+    public ResponseEntity<String> exportToCSV(@RequestParam Long userId) {
         StringBuilder csv = new StringBuilder();
-
-        // Headers
         csv.append("Type,Date,Time,Value1,Value2,Value3,Note\n");
 
-        // Water logs
-        waterRepository.findAll().forEach(log -> {
+        waterRepository.findByUserId(userId).forEach(log -> {
             csv.append(String.format("Water,%s,%s,%d,,,\n",
                     log.getDate(), log.getTime(), log.getAmount()));
         });
 
-        // Exercise logs
-        exerciseRepository.findAll().forEach(log -> {
+        exerciseRepository.findByUserId(userId).forEach(log -> {
             csv.append(String.format("Exercise,%s,%s,%s,%d,%d,\n",
-                    log.getDate(), log.getTime(), log.getType(), log.getDuration(),
-                    log.getCalories()));
+                    log.getDate(), log.getTime(), log.getType(),
+                    log.getDuration(), log.getCalories()));
         });
 
-        // Sleep logs
-        sleepRepository.findAll().forEach(log -> {
+        sleepRepository.findByUserId(userId).forEach(log -> {
             csv.append(String.format("Sleep,%s,,%.1f,%d,,\n",
                     log.getDate(), log.getHours(), log.getQuality()));
         });
 
-        // Calories logs
-        caloriesRepository.findAll().forEach(log -> {
+        caloriesRepository.findByUserId(userId).forEach(log -> {
             csv.append(String.format("Calories,%s,%s,%d,,,%s\n",
-                    log.getDate(), log.getTime(), log.getCalories(), 
+                    log.getDate(), log.getTime(), log.getCalories(),
                     log.getFoodName() != null ? log.getFoodName() : ""));
         });
 
-        // Mood logs
-        moodRepository.findAll().forEach(log -> {
+        moodRepository.findByUserId(userId).forEach(log -> {
             csv.append(String.format("Mood,%s,,%d,,,%s\n",
-                    log.getDate(), log.getMood(), log.getNote() != null ? log.getNote() : ""));
+                    log.getDate(), log.getMood(),
+                    log.getNote() != null ? log.getNote() : ""));
         });
 
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.parseMediaType("text/csv"));
-        headers.setContentDispositionFormData("attachment", "fitlife_data_" + LocalDate.now() + ".csv");
+        headers.setContentDispositionFormData(
+                "attachment", "fitlife_data_" + userId + ".csv");
 
-        return ResponseEntity.ok()
+        return ResponseEntity
+                .ok()
                 .headers(headers)
                 .body(csv.toString());
+
     }
 
     // Export all data as JSON
     @GetMapping("/export/json")
-    public Map<String, Object> exportToJSON() {
+    public Map<String, Object> exportToJSON(@RequestParam Long userId) {
         Map<String, Object> data = new HashMap<>();
 
         data.put("exportDate", LocalDate.now().toString());
-        data.put("water", waterRepository.findAll());
-        data.put("exercise", exerciseRepository.findAll());
-        data.put("sleep", sleepRepository.findAll());
-        data.put("calories", caloriesRepository.findAll());
-        data.put("mood", moodRepository.findAll());
+        data.put("water", waterRepository.findByUserId(userId));
+        data.put("exercise", exerciseRepository.findByUserId(userId));
+        data.put("sleep", sleepRepository.findByUserId(userId));
+        data.put("calories", caloriesRepository.findByUserId(userId));
+        data.put("mood", moodRepository.findByUserId(userId));
 
         return data;
     }
 
     // Delete all data (with confirmation)
+
     @DeleteMapping("/clear-all")
-    public ResponseEntity<Map<String, String>> clearAllData(@RequestParam String confirmation) {
+    @Transactional
+    public ResponseEntity<Map<String, String>> clearAllData(
+            @RequestParam Long userId,
+            @RequestParam String confirmation) {
+
         if (!"DELETE_ALL_DATA".equals(confirmation)) {
             return ResponseEntity.badRequest()
                     .body(Map.of("error", "Invalid confirmation code"));
         }
 
-        waterRepository.deleteAll();
-        exerciseRepository.deleteAll();
-        sleepRepository.deleteAll();
-        caloriesRepository.deleteAll();
-        moodRepository.deleteAll();
+        // ⚠️ urutan aman
+        moodRepository.deleteByUserId(userId);
+        sleepRepository.deleteByUserId(userId);
+        exerciseRepository.deleteByUserId(userId);
+        caloriesRepository.deleteByUserId(userId);
+        waterRepository.deleteByUserId(userId);
 
-        return ResponseEntity.ok(Map.of("message", "All data deleted successfully"));
+        return ResponseEntity.ok(
+                Map.of("message", "All user data deleted successfully"));
     }
 
     // Delete old data (older than X days)
     @DeleteMapping("/cleanup")
-    @Transactional 
-    public ResponseEntity<Map<String, Object>> cleanupOldData(@RequestParam int olderThanDays) {
+    @Transactional
+    public ResponseEntity<Map<String, Object>> cleanupOldData(
+            @RequestParam Long userId,
+            @RequestParam int olderThanDays) {
+
         LocalDate cutoffDate = LocalDate.now().minusDays(olderThanDays);
 
-        long waterDeleted = waterRepository.deleteByDateBefore(cutoffDate);
-        long exerciseDeleted = exerciseRepository.deleteByDateBefore(cutoffDate);
-        long sleepDeleted = sleepRepository.deleteByDateBefore(cutoffDate);
-        long caloriesDeleted = caloriesRepository.deleteByDateBefore(cutoffDate);
-        long moodDeleted = moodRepository.deleteByDateBefore(cutoffDate);
+        long waterDeleted = waterRepository.deleteByUserIdAndDateBefore(userId, cutoffDate);
+        long exerciseDeleted = exerciseRepository.deleteByUserIdAndDateBefore(userId, cutoffDate);
+        long sleepDeleted = sleepRepository.deleteByUserIdAndDateBefore(userId, cutoffDate);
+        long caloriesDeleted = caloriesRepository.deleteByUserIdAndDateBefore(userId, cutoffDate);
+        long moodDeleted = moodRepository.deleteByUserIdAndDateBefore(userId, cutoffDate);
 
-        Map<String, Object> result = new HashMap<>();
-        result.put("waterDeleted", waterDeleted);
-        result.put("exerciseDeleted", exerciseDeleted);
-        result.put("sleepDeleted", sleepDeleted);
-        result.put("caloriesDeleted", caloriesDeleted);
-        result.put("moodDeleted", moodDeleted);
-        result.put("totalDeleted",
-                waterDeleted + exerciseDeleted + sleepDeleted + caloriesDeleted + moodDeleted);
+        long totalDeleted = waterDeleted +
+                exerciseDeleted +
+                sleepDeleted +
+                caloriesDeleted +
+                moodDeleted;
 
-        return ResponseEntity.ok(result);
+        return ResponseEntity.ok(Map.of(
+                "totalDeleted", totalDeleted,
+                "waterDeleted", waterDeleted,
+                "exerciseDeleted", exerciseDeleted,
+                "sleepDeleted", sleepDeleted,
+                "caloriesDeleted", caloriesDeleted,
+                "moodDeleted", moodDeleted));
     }
 
     // Get weekly report
     @GetMapping("/report/weekly")
-    public Map<String, Object> getWeeklyReport() {
+    public Map<String, Object> getWeeklyReport(@RequestParam Long userId) {
         Map<String, Object> report = new HashMap<>();
         LocalDate today = LocalDate.now();
         LocalDate weekAgo = today.minusDays(7);
 
-        // Weekly Water Summary
-        Map<LocalDate, Integer> waterByDate = waterRepository.findAll().stream()
+        Map<LocalDate, Integer> waterByDate = waterRepository.findByUserId(userId).stream()
                 .filter(log -> !log.getDate().isBefore(weekAgo))
                 .collect(Collectors.groupingBy(
-                        log -> log.getDate(),
-                        Collectors.summingInt(log -> log.getAmount())));
+                        WaterLog::getDate,
+                        Collectors.summingInt(WaterLog::getAmount)));
 
-        List<Map<String, Object>> waterWeekly = waterByDate.entrySet().stream()
-                .sorted(Map.Entry.comparingByKey())
-                .map(e -> {
-                    Map<String, Object> entry = new HashMap<>();
-                    entry.put("date", e.getKey().toString());
-                    entry.put("total", e.getValue());
-                    return entry;
-                })
-                .collect(Collectors.toList());
+        report.put("weeklyWater", mapToList(waterByDate));
 
-        report.put("weeklyWater", waterWeekly);
-
-        // Weekly Exercise Summary
-        Map<LocalDate, Integer> exerciseByDate = exerciseRepository.findAll().stream()
+        Map<LocalDate, Integer> exerciseByDate = exerciseRepository.findByUserId(userId).stream()
                 .filter(log -> !log.getDate().isBefore(weekAgo))
                 .collect(Collectors.groupingBy(
-                        log -> log.getDate(),
-                        Collectors.summingInt(log -> log.getDuration())));
+                        ExerciseLog::getDate,
+                        Collectors.summingInt(ExerciseLog::getDuration)));
 
-        List<Map<String, Object>> exerciseWeekly = exerciseByDate.entrySet().stream()
-                .sorted(Map.Entry.comparingByKey())
-                .map(e -> {
-                    Map<String, Object> entry = new HashMap<>();
-                    entry.put("date", e.getKey().toString());
-                    entry.put("total", e.getValue());
-                    return entry;
-                })
-                .collect(Collectors.toList());
+        report.put("weeklyExercise", mapToList(exerciseByDate));
 
-        report.put("weeklyExercise", exerciseWeekly);
-
-        // Weekly Calories Summary
-        Map<LocalDate, Integer> caloriesByDate = caloriesRepository.findAll().stream()
+        Map<LocalDate, Integer> caloriesByDate = caloriesRepository.findByUserId(userId).stream()
                 .filter(log -> !log.getDate().isBefore(weekAgo))
                 .collect(Collectors.groupingBy(
-                        log -> log.getDate(),
-                        Collectors.summingInt(log -> log.getCalories())));
+                        CaloriesLog::getDate,
+                        Collectors.summingInt(CaloriesLog::getCalories)));
 
-        List<Map<String, Object>> caloriesWeekly = caloriesByDate.entrySet().stream()
-                .sorted(Map.Entry.comparingByKey())
-                .map(e -> {
-                    Map<String, Object> entry = new HashMap<>();
-                    entry.put("date", e.getKey().toString());
-                    entry.put("total", e.getValue());
-                    return entry;
-                })
-                .collect(Collectors.toList());
-
-        report.put("weeklyCalories", caloriesWeekly);
-
-        report.put("dateRange", Map.of("from", weekAgo.toString(), "to", today.toString()));
+        report.put("weeklyCalories", mapToList(caloriesByDate));
+        report.put("dateRange", Map.of("from", weekAgo, "to", today));
 
         return report;
     }
 
     // Helper methods
+    private List<Map<String, Object>> mapToList(Map<LocalDate, Integer> data) {
+        return data.entrySet().stream()
+                .sorted(Map.Entry.comparingByKey())
+                .map(e -> {
+                    Map<String, Object> map = new HashMap<>();
+                    map.put("date", e.getKey().toString());
+                    map.put("total", e.getValue());
+                    return map;
+                })
+                .collect(Collectors.toList());
+    }
 
     private void addTableHeader(PdfPTable table, String text, Font font) {
         PdfPCell cell = new PdfPCell(new Phrase(text, font));
@@ -525,31 +514,31 @@ public class DatabaseController {
         return recommendations;
     }
 
-    private String getOldestRecordDate() {
+    private String getOldestRecordDate(Long userId) {
         List<LocalDate> dates = new ArrayList<>();
 
-        waterRepository.findAll().stream()
-                .map(log -> log.getDate())
+        waterRepository.findByUserId(userId).stream()
+                .map(WaterLog::getDate)
                 .min(LocalDate::compareTo)
                 .ifPresent(dates::add);
 
-        exerciseRepository.findAll().stream()
-                .map(log -> log.getDate())
+        exerciseRepository.findByUserId(userId).stream()
+                .map(ExerciseLog::getDate)
                 .min(LocalDate::compareTo)
                 .ifPresent(dates::add);
 
-        sleepRepository.findAll().stream()
-                .map(log -> log.getDate())
+        sleepRepository.findByUserId(userId).stream()
+                .map(SleepLog::getDate)
                 .min(LocalDate::compareTo)
                 .ifPresent(dates::add);
 
-        caloriesRepository.findAll().stream()
-                .map(log -> log.getDate())
+        caloriesRepository.findByUserId(userId).stream()
+                .map(CaloriesLog::getDate)
                 .min(LocalDate::compareTo)
                 .ifPresent(dates::add);
 
-        moodRepository.findAll().stream()
-                .map(log -> log.getDate())
+        moodRepository.findByUserId(userId).stream()
+                .map(MoodLog::getDate)
                 .min(LocalDate::compareTo)
                 .ifPresent(dates::add);
 

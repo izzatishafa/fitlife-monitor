@@ -17,6 +17,10 @@ public class SleepLog {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    // ✨ ADD THIS - Foreign key to users table
+    @Column(name = "user_id", nullable = false)
+    private Long userId;
+
     @Column(nullable = false)
     private Double hours;
 
@@ -30,7 +34,8 @@ public class SleepLog {
     public SleepLog() {
     }
 
-    public SleepLog(Double hours, Integer quality, LocalDate date) {
+    public SleepLog(Long userId, Double hours, Integer quality, LocalDate date) {
+        this.userId = userId;
         this.hours = hours;
         this.quality = quality;
         this.date = date;
@@ -43,6 +48,15 @@ public class SleepLog {
 
     public void setId(Long id) {
         this.id = id;
+    }
+
+    // ✨ ADD userId getter/setter
+    public Long getUserId() {
+        return userId;
+    }
+
+    public void setUserId(Long userId) {
+        this.userId = userId;
     }
 
     public Double getHours() {

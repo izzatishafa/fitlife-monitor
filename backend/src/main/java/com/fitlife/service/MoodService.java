@@ -11,30 +11,35 @@ import com.fitlife.repository.MoodRepository;
 
 @Service
 public class MoodService {
-    
+
     @Autowired
     private MoodRepository moodRepository;
-    
-    public Optional<MoodLog> getTodayMood() {
-        return moodRepository.findByDate(LocalDate.now());
+
+    public Optional<MoodLog> getTodayMood(Long userId) {
+        return moodRepository.findByUserIdAndDate(
+                userId, LocalDate.now());
     }
-    
-    public MoodLog saveMood(Integer mood, String note) {
-        Optional<MoodLog> existing = moodRepository.findByDate(LocalDate.now());
-        
+
+    public MoodLog saveMood(Long userId, Integer mood, String note) {
+        Optional<MoodLog> existing = moodRepository.findByUserIdAndDate(userId, LocalDate.now());
+
         if (existing.isPresent()) {
             MoodLog log = existing.get();
             log.setMood(mood);
             log.setNote(note);
             return moodRepository.save(log);
-        } else {
-            MoodLog log = new MoodLog(mood, note, LocalDate.now());
-            return moodRepository.save(log);
         }
+
+        MoodLog log = new MoodLog(
+                userId,
+                mood,
+                note,
+                LocalDate.now());
+        return moodRepository.save(log);
     }
-    
-    public Double getWeeklyAverage() {
-        Double avg = moodRepository.getAverageMood();
+
+    public Double getAverageMood(Long userId) {
+        Double avg = moodRepository.getAverageMood(userId);
         return avg != null ? avg : 0.0;
     }
 }

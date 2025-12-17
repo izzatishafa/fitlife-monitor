@@ -18,6 +18,10 @@ public class WaterLog {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    // ✨ ADD THIS - Foreign key to users table
+    @Column(name = "user_id", nullable = false)
+    private Long userId;
+
     @Column(nullable = false)
     private Integer amount;
 
@@ -31,7 +35,9 @@ public class WaterLog {
     public WaterLog() {
     }
 
-    public WaterLog(Integer amount, LocalDate date, LocalTime time) {
+    // ✨ UPDATE constructor to include userId
+    public WaterLog(Long userId, Integer amount, LocalDate date, LocalTime time) {
+        this.userId = userId;
         this.amount = amount;
         this.date = date;
         this.time = time;
@@ -44,6 +50,15 @@ public class WaterLog {
 
     public void setId(Long id) {
         this.id = id;
+    }
+
+    // ✨ ADD userId getter/setter
+    public Long getUserId() {
+        return userId;
+    }
+
+    public void setUserId(Long userId) {
+        this.userId = userId;
     }
 
     public Integer getAmount() {

@@ -11,6 +11,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.fitlife.model.MoodLog;
@@ -41,24 +42,24 @@ public class DashboardController {
     private MoodService moodService;
 
     @GetMapping("/stats")
-    public Map<String, Object> getDashboardStats() {
+    public Map<String, Object> getDashboardStats(@RequestParam Long userId) {
         Map<String, Object> stats = new HashMap<>();
-        stats.put("waterToday", waterService.getTodayTotal());
-        stats.put("exerciseToday", exerciseService.getTodayTotal());
-        stats.put("avgSleep", sleepService.getAverageHours());
-        stats.put("caloriesToday", caloriesService.getTodayTotal());
-        stats.put("moodToday", moodService.getTodayMood().map(MoodLog::getMood).orElse(0));
-        stats.put("avgMood", moodService.getWeeklyAverage());
+        stats.put("waterToday", waterService.getTodayTotal(userId));
+        stats.put("exerciseToday", exerciseService.getTodayTotal(userId));
+        stats.put("avgSleep", sleepService.getAverageHours(userId));
+        stats.put("caloriesToday", caloriesService.getTodayTotal(userId));
+        stats.put("moodToday", moodService.getTodayMood(userId).map(MoodLog::getMood).orElse(0));
+        stats.put("avgMood", moodService.getAverageMood(userId));
         return stats;
     }
 
     @GetMapping("/summary")
-    public Map<String, Object> getDailySummary() {
+    public Map<String, Object> getDailySummary(@RequestParam Long userId) {
         Map<String, Object> summary = new HashMap<>();
         LocalDate today = LocalDate.now();
 
         // Water Summary
-        Integer waterToday = waterService.getTodayTotal();
+        Integer waterToday = waterService.getTodayTotal(userId);
         Map<String, Object> waterSummary = new HashMap<>();
         waterSummary.put("total", waterToday);
         waterSummary.put("goal", 2000);
@@ -67,7 +68,7 @@ public class DashboardController {
         summary.put("water", waterSummary);
 
         // Exercise Summary
-        Integer exerciseToday = exerciseService.getTodayTotal();
+        Integer exerciseToday = exerciseService.getTodayTotal(userId);
         Map<String, Object> exerciseSummary = new HashMap<>();
         exerciseSummary.put("total", exerciseToday);
         exerciseSummary.put("goal", 30);
@@ -75,8 +76,8 @@ public class DashboardController {
         exerciseSummary.put("status", exerciseToday >= 30 ? "achieved" : "in_progress");
         summary.put("exercise", exerciseSummary);
 
-        // Sleep Summary (yesterday's sleep)
-        Double avgSleep = sleepService.getAverageHours();
+        // Sleep Summary
+        Double avgSleep = sleepService.getAverageHours(userId);
         Map<String, Object> sleepSummary = new HashMap<>();
         sleepSummary.put("average", avgSleep);
         sleepSummary.put("goal", 7.5);
@@ -84,7 +85,7 @@ public class DashboardController {
         summary.put("sleep", sleepSummary);
 
         // Calories Summary
-        Integer caloriesToday = caloriesService.getTodayTotal();
+        Integer caloriesToday = caloriesService.getTodayTotal(userId);
         Map<String, Object> caloriesSummary = new HashMap<>();
         caloriesSummary.put("total", caloriesToday);
         caloriesSummary.put("goal", 2000);
@@ -93,7 +94,7 @@ public class DashboardController {
         summary.put("calories", caloriesSummary);
 
         // Mood Summary
-        Optional<MoodLog> todayMood = moodService.getTodayMood();
+        Optional<MoodLog> todayMood = moodService.getTodayMood(userId);
         Map<String, Object> moodSummary = new HashMap<>();
         if (todayMood.isPresent()) {
             moodSummary.put("mood", todayMood.get().getMood());

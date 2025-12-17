@@ -1,5 +1,5 @@
 // API Configuration
-const API_URL = 'http://localhost:8080/api';
+const API_URL = "http://localhost:8080/api";
 
 // AUTENTIKASI
 function checkAuthentication() {
@@ -50,6 +50,15 @@ if (!checkAuthentication()) {
 updateGreeting();
 setInterval(updateGreeting, 10 * 60 * 1000);
 
+function getCurrentUser() {
+  return JSON.parse(sessionStorage.getItem("fitlife_user"));
+}
+
+function isDemoUser() {
+  const user = getCurrentUser();
+  return user && user.isDemo === true;
+}
+
 async function handleLogout() {
   const confirmed = await swalConfirm({
     title: "Wait 🥺",
@@ -60,10 +69,27 @@ async function handleLogout() {
 
   if (!confirmed) return;
 
+  const user =
+    JSON.parse(sessionStorage.getItem("fitlife_user")) ||
+    JSON.parse(localStorage.getItem("fitlife_user"));
+
+  // 🧪 DEMO MODE → reset total
+  if (user?.isDemo) {
+    // hapus semua demo data
+    Object.keys(sessionStorage)
+      .filter((key) => key.startsWith("demo_"))
+      .forEach((key) => sessionStorage.removeItem(key));
+
+    sessionStorage.clear(); // aman, demo only
+  } else {
+    // 👤 USER ASLI → jangan hapus localStorage selain auth
+    localStorage.removeItem("fitlife_user");
+    localStorage.removeItem("fitlife_token");
+  }
+
+  // auth wajib dihapus
   sessionStorage.removeItem("fitlife_user");
   sessionStorage.removeItem("fitlife_token");
-  localStorage.removeItem("fitlife_user");
-  localStorage.removeItem("fitlife_token");
 
   await Swal.fire({
     icon: "success",
@@ -607,20 +633,8 @@ async function loadDashboard() {
       }`;
     }
 
-    // Load BMI
-    const savedBMI = localStorage.getItem("lastBMI");
-    const savedCategory = localStorage.getItem("lastBMICategory");
-    const savedClass = localStorage.getItem("lastBMICategoryClass");
-
-    if (savedBMI) {
-      document.getElementById("dashboard-bmi").textContent = savedBMI;
-    }
-
-    if (savedCategory) {
-      const dashCat = document.getElementById("dashboard-bmi-category");
-      dashCat.textContent = savedCategory;
-      dashCat.className = `text-sm font-medium ${savedClass}`;
-    }
+    // Load BMI (per user)
+    loadUserBMI();
 
     await loadQuickStats();
   } catch (error) {
@@ -967,10 +981,15 @@ async function deleteSleep(id) {
 }
 
 // ==================== BMI CALCULATOR ====================
+// ==================== BMI STORAGE (PER USER) ====================
+function getBMIStorageKey() {
+  const user = JSON.parse(sessionStorage.getItem("fitlife_user"));
+  return user && user.isDemo ? "demo_bmi" : `bmi_user_${user.id}`;
+}
+
 let selectedSex = null;
 
 function selectSex(sex) {
-  console.log("kepilih ni");
   selectedSex = sex;
 
   // style button active (opsional)
@@ -1048,7 +1067,6 @@ function validateWeight() {
 }
 
 function calculateBMI() {
-  // Ambil value dari semua input
   const sex = selectedSex;
   const ageInput = document.getElementById("bmi-age");
   const heightInput = document.getElementById("bmi-height");
@@ -1058,87 +1076,74 @@ function calculateBMI() {
   const height = parseFloat(heightInput.value);
   const weight = parseFloat(weightInput.value);
 
-  // Cek input kosong
-  if (!sex || !ageInput.value || !heightInput.value || !weightInput.value) {
-    let missingFields = [];
-
-    if (!sex) missingFields.push("sex");
-    if (!ageInput.value) missingFields.push("age");
-    if (!heightInput.value) missingFields.push("height");
-    if (!weightInput.value) missingFields.push("weight");
-
-    showAlert(`Please fill in: ${missingFields.join(", ")}`, "error");
+  if (!sex || !age || !height || !weight) {
+    showAlert("Please complete all BMI fields.", "error");
     return;
   }
 
-  // validate fields
-  const isAgeValid = validateAge();
-  const isHeightValid = validateHeight();
-  const isWeightValid = validateWeight();
-
-  if (!isAgeValid || !isHeightValid || !isWeightValid) {
-    showAlert(
-      "Please correct the highlighted errors before calculating BMI.",
-      "error"
-    );
+  if (!validateAge() || !validateHeight() || !validateWeight()) {
+    showAlert("Please fix invalid BMI inputs.", "error");
     return;
   }
 
-  // calculate bmi
-  const heightInMeters = height / 100;
-  const bmi = (weight / (heightInMeters * heightInMeters)).toFixed(1);
+  const heightMeter = height / 100;
+  const bmi = (weight / (heightMeter * heightMeter)).toFixed(1);
 
   let category, categoryClass, advice;
 
   if (bmi < 18.5) {
     category = "Underweight";
     categoryClass = "text-blue-600";
-    advice =
-      "Consider consulting a nutritionist for a healthy weight gain plan.";
+    advice = "Consider consulting a nutritionist for healthy weight gain.";
   } else if (bmi < 25) {
     category = "Normal";
     categoryClass = "text-green-600";
-    advice = "Great! Maintain your healthy lifestyle and regular exercise.";
+    advice = "Great! Maintain your healthy lifestyle.";
   } else if (bmi < 30) {
     category = "Overweight";
     categoryClass = "text-yellow-600";
-    advice = "Consider increasing physical activity and monitoring your diet.";
+    advice = "Increase activity and monitor diet.";
   } else {
     category = "Obese";
     categoryClass = "text-red-600";
-    advice = "We recommend consulting a healthcare professional for guidance.";
+    advice = "Consult a healthcare professional.";
   }
 
-  // tampilin hasil
+  // UI Result
   document.getElementById("bmi-value").textContent = bmi;
-
-  const categoryText = document.getElementById("bmi-category");
-  categoryText.textContent = category;
-  categoryText.className = `text-xl font-semibold ${categoryClass}`;
+  const catText = document.getElementById("bmi-category");
+  catText.textContent = category;
+  catText.className = `text-xl font-semibold ${categoryClass}`;
 
   document.getElementById("bmi-info").innerHTML = `
-        <p class="text-gray-700"><strong>Sex:</strong> ${
-          selectedSex === "male" ? "Male ♂" : "Female ♀"
-        }</p>
-        <p class="text-gray-700"><strong>Age:</strong> ${age} years</p>
-        <p class="text-gray-700"><strong>Height:</strong> ${height} cm</p>
-        <p class="text-gray-700"><strong>Weight:</strong> ${weight} kg</p>
-        <p class="text-gray-600 mt-3 italic">${advice}</p>
-    `;
+    <p><strong>Sex:</strong> ${sex === "male" ? "Male ♂" : "Female ♀"}</p>
+    <p><strong>Age:</strong> ${age} years</p>
+    <p><strong>Height:</strong> ${height} cm</p>
+    <p><strong>Weight:</strong> ${weight} kg</p>
+    <p class="italic mt-2">${advice}</p>
+  `;
 
   document.getElementById("bmi-result").classList.remove("hidden");
 
-  // update dashbord
+  // DASHBOARD
   document.getElementById("dashboard-bmi").textContent = bmi;
+  const dashCat = document.getElementById("dashboard-bmi-category");
+  dashCat.textContent = category;
+  dashCat.className = `text-sm font-medium ${categoryClass}`;
 
-  const dashboardCategory = document.getElementById("dashboard-bmi-category");
-  dashboardCategory.textContent = category;
-  dashboardCategory.className = `text-sm font-medium ${categoryClass}`;
-
-  // taro di local storage
-  localStorage.setItem("lastBMI", bmi);
-  localStorage.setItem("lastBMICategory", category);
-  localStorage.setItem("lastBMICategoryClass", categoryClass);
+  // 🔥 SAVE PER USER
+  const bmiKey = getBMIStorageKey();
+  if (bmiKey) {
+    localStorage.setItem(
+      bmiKey,
+      JSON.stringify({
+        bmi,
+        category,
+        categoryClass,
+        updatedAt: new Date().toISOString(),
+      })
+    );
+  }
 
   showAlert("BMI calculated successfully!", "success");
 }
@@ -1166,6 +1171,22 @@ function clearBMI() {
   document.getElementById("weight-error").classList.add("hidden");
 
   document.getElementById("bmi-result").classList.add("hidden");
+}
+
+function loadUserBMI() {
+  const bmiKey = getBMIStorageKey();
+  if (!bmiKey) return;
+
+  const raw = localStorage.getItem(bmiKey);
+  if (!raw) return;
+
+  const data = JSON.parse(raw);
+
+  document.getElementById("dashboard-bmi").textContent = data.bmi;
+
+  const cat = document.getElementById("dashboard-bmi-category");
+  cat.textContent = data.category;
+  cat.className = `text-sm font-medium ${data.categoryClass}`;
 }
 
 // ==================== CALORIES TRACKER ====================
@@ -1505,8 +1526,6 @@ async function loadDatabaseStats() {
     // Update date range
     const dateRange = `${stats.oldestRecord} to ${stats.newestRecord}`;
     document.getElementById("db-date-range").textContent = dateRange;
-
-    console.log("✅ Database stats loaded");
   } catch (error) {
     console.error("Error loading database stats:", error);
     showAlert("Error loading database statistics", "error");
@@ -1523,15 +1542,16 @@ async function printReport(event) {
   let originalContent;
 
   try {
+    const userId = api.getUserId(); // 🔥 ambil userId
+
     button = event.target.closest("button");
     originalContent = button.innerHTML;
 
-    // loading state
     button.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Generating...';
     button.disabled = true;
 
     const response = await fetch(
-      "http://localhost:8080/api/database/export/pdf"
+      `http://localhost:8080/api/database/export/pdf?userId=${userId}`
     );
 
     if (!response.ok) {
@@ -1550,12 +1570,10 @@ async function printReport(event) {
     window.URL.revokeObjectURL(url);
     document.body.removeChild(a);
 
-    // success swal
     Swal.fire({
       icon: "success",
       title: "Report Generated 🎉",
       text: "Your PDF report has been downloaded successfully!",
-      confirmButtonText: "Okay",
       confirmButtonColor: "#0ea5e9",
     });
   } catch (error) {
@@ -1564,11 +1582,10 @@ async function printReport(event) {
     Swal.fire({
       icon: "error",
       title: "Oops!",
-      text: "Failed to generate PDF report. Please try again.",
+      text: "Failed to generate PDF report.",
       confirmButtonColor: "#ef4444",
     });
   } finally {
-    // restore button
     if (button) {
       button.innerHTML = originalContent;
       button.disabled = false;
@@ -1642,6 +1659,7 @@ async function cleanupOldData() {
     Swal.fire("Error", "Failed to cleanup old data.", "error");
   }
 }
+
 function renderTable(title, headers, data, rowRenderer) {
   if (!data || data.length === 0) {
     return `<h2>${title}</h2><p>No data available.</p>`;
@@ -1736,6 +1754,29 @@ async function swalConfirm({
   });
   return result.isConfirmed;
 }
+
+// DEMO STORAGE
+const demoStorage = {
+  get(key) {
+    return JSON.parse(sessionStorage.getItem(`demo_${key}`)) || [];
+  },
+
+  set(key, data) {
+    sessionStorage.setItem(`demo_${key}`, JSON.stringify(data));
+  },
+
+  add(key, item) {
+    const data = this.get(key);
+    data.push(item);
+    this.set(key, data);
+  },
+
+  clearAll() {
+    Object.keys(sessionStorage)
+      .filter((k) => k.startsWith("demo_"))
+      .forEach((k) => sessionStorage.removeItem(k));
+  },
+};
 
 // ==================== INITIALIZATION ====================
 // Load dashboard on page load

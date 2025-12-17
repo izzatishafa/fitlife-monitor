@@ -15,12 +15,14 @@ public class WaterService {
     @Autowired
     private WaterRepository waterRepository;
 
-    public List<WaterLog> getTodayLogs() {
-        return waterRepository.findByDateOrderByTimeDesc(LocalDate.now());
+    // ✨ ADD userId parameter
+    public List<WaterLog> getTodayLogs(Long userId) {
+        return waterRepository.findByUserIdAndDateOrderByTimeDesc(userId, LocalDate.now());
     }
 
-    public WaterLog addWaterLog(Integer amount) {
-        WaterLog log = new WaterLog(amount, LocalDate.now(), LocalTime.now());
+    // ✨ ADD userId parameter
+    public WaterLog addWaterLog(Long userId, Integer amount) {
+        WaterLog log = new WaterLog(userId, amount, LocalDate.now(), LocalTime.now());
         return waterRepository.save(log);
     }
 
@@ -28,9 +30,9 @@ public class WaterService {
         waterRepository.deleteById(id);
     }
 
-    public Integer getTodayTotal() {
-        Integer total = waterRepository.getTotalByDate(LocalDate.now());
+    // ✨ ADD userId parameter
+    public Integer getTodayTotal(Long userId) {
+        Integer total = waterRepository.getTotalByDate(userId, LocalDate.now());
         return total != null ? total : 0;
     }
-
 }

@@ -17,22 +17,23 @@ public class ExerciseController {
     private ExerciseService exerciseService;
 
     @GetMapping("/recent")
-    public List<ExerciseLog> getRecentLogs() {
-        return exerciseService.getRecentLogs();
+    public List<ExerciseLog> getRecentLogs(@RequestParam Long userId) {
+        return exerciseService.getRecentLogs(userId);
     }
 
     @GetMapping("/total")
-    public Map<String, Integer> getTodayTotal() {
-        return Map.of("total", exerciseService.getTodayTotal());
+    public Map<String, Integer> getTodayTotal(@RequestParam Long userId) {
+        return Map.of("total", exerciseService.getTodayTotal(userId));
     }
 
     @PostMapping("/add")
     public ResponseEntity<ExerciseLog> addExercise(@RequestBody Map<String, Object> request) {
+        Long userId = Long.valueOf(request.get("userId").toString());
         String type = (String) request.get("type");
-        Integer duration = (Integer) request.get("duration");
-        Integer calories = (Integer) request.get("calories");
+        Integer duration = Integer.valueOf(request.get("duration").toString());
+        Integer calories = Integer.valueOf(request.get("calories").toString());
 
-        ExerciseLog log = exerciseService.addExerciseLog(type, duration, calories);
+        ExerciseLog log = exerciseService.addExerciseLog(userId, type, duration, calories);
         return ResponseEntity.ok(log);
     }
 

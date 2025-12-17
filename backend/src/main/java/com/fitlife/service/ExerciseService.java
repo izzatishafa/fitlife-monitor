@@ -11,18 +11,28 @@ import com.fitlife.model.ExerciseLog;
 import com.fitlife.repository.ExerciseRepository;
 
 @Service
-
 public class ExerciseService {
+
     @Autowired
     private ExerciseRepository exerciseRepository;
 
-    public List<ExerciseLog> getRecentLogs() {
-        return exerciseRepository.findTop20ByOrderByDateDescTimeDesc();
+    public List<ExerciseLog> getRecentLogs(Long userId) {
+        return exerciseRepository.findByUserIdAndDateOrderByTimeDesc(
+                userId, LocalDate.now());
     }
 
-    public ExerciseLog addExerciseLog(String type, Integer duration, Integer calories) {
-        ExerciseLog log = new ExerciseLog(type, duration, calories,
-                LocalDate.now(), LocalTime.now());
+    public ExerciseLog addExerciseLog(
+            Long userId,
+            String type,
+            Integer duration,
+            Integer calories) {
+        ExerciseLog log = new ExerciseLog(
+                userId,
+                type,
+                duration,
+                calories,
+                LocalDate.now(),
+                LocalTime.now());
         return exerciseRepository.save(log);
     }
 
@@ -30,9 +40,9 @@ public class ExerciseService {
         exerciseRepository.deleteById(id);
     }
 
-    public Integer getTodayTotal() {
-        Integer total = exerciseRepository.getTotalDurationByDate(LocalDate.now());
+    public Integer getTodayTotal(Long userId) {
+        Integer total = exerciseRepository.getTotalDurationByDate(
+                userId, LocalDate.now());
         return total != null ? total : 0;
     }
-
 }

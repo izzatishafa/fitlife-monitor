@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.fitlife.model.MoodLog;
@@ -25,38 +26,37 @@ public class MoodController {
     private MoodService moodService;
 
     @GetMapping("/today")
-    public ResponseEntity<Map<String, Object>> getTodayMood() {
-        Optional<MoodLog> mood = moodService.getTodayMood();
+    public ResponseEntity<Map<String, Object>> getTodayMood(@RequestParam Long userId) {
+        Optional<MoodLog> mood = moodService.getTodayMood(userId);
 
         if (mood.isPresent()) {
             MoodLog log = mood.get();
-            Map<String, Object> response = new HashMap<>();
-            response.put("mood", log.getMood());
-            response.put("note", log.getNote());
-            response.put("date", log.getDate().toString());
-            return ResponseEntity.ok(response);
-        } else {
-            // Return empty data instead of 204 No Content
-            Map<String, Object> emptyResponse = new HashMap<>();
-            emptyResponse.put("mood", null);
-            emptyResponse.put("note", null);
-            emptyResponse.put("logged", false);
-            return ResponseEntity.ok(emptyResponse);
+            return ResponseEntity.ok(Map.of(
+                    "mood", log.getMood(),
+                    "note", log.getNote(),
+                    "date", log.getDate().toString(),
+                    "logged", true));
         }
+
+        return ResponseEntity.ok(Map.of(
+                "mood", null,
+                "note", null,
+                "logged", false));
     }
 
     @GetMapping("/average")
-    public ResponseEntity<Map<String, Double>> getWeeklyAverage() {
-        Double avg = moodService.getWeeklyAverage();
-        // Always return a valid response
+    public ResponseEntity<Map<String, Double>> getAverage(@RequestParam Long userId) {
+        Double avg = moodService.getAverageMood(userId);
         return ResponseEntity.ok(Map.of("average", avg != null ? avg : 0.0));
     }
 
     @PostMapping("/save")
     public ResponseEntity<MoodLog> saveMood(@RequestBody Map<String, Object> request) {
-        Integer mood = (Integer) request.get("mood");
+        Long userId = Long.valueOf(request.get("userId").toString());
+        Integer mood = Integer.valueOf(request.get("mood").toString());
         String note = (String) request.get("note");
-        MoodLog log = moodService.saveMood(mood, note);
+
+        MoodLog log = moodService.saveMood(userId, mood, note);
         return ResponseEntity.ok(log);
     }
 }
