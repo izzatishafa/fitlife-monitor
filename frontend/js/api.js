@@ -3,7 +3,7 @@ const API_BASE_URL = "http://localhost:8080/api";
 
 // API Helper Functions
 const api = {
-  // ✨ Helper function to get current user ID
+  // Helper function to get current user ID
   getUserId() {
     const userStr =
       localStorage.getItem("fitlife_user") ||
@@ -112,8 +112,16 @@ const api = {
     },
 
     getTotal: () => {
+      if (api.isDemoUser()) {
+        const today =
+          JSON.parse(sessionStorage.getItem("demo_water_today")) || [];
+
+        const total = today.reduce((sum, log) => sum + log.amount, 0);
+
+        return Promise.resolve({ total });
+      }
+
       const userId = api.getUserId();
-      console.log("🔍 getUserId() returns:", userId);
       return api.get(`/water/total?userId=${userId}`);
     },
 
@@ -123,8 +131,9 @@ const api = {
           JSON.parse(sessionStorage.getItem("demo_water_today")) || [];
 
         today.push({
+          id: Date.now(), 
           amount,
-          time: new Date().toLocaleTimeString(),
+          time: new Date().toLocaleTimeString("en-GB"),
         });
 
         sessionStorage.setItem("demo_water_today", JSON.stringify(today));
@@ -136,66 +145,186 @@ const api = {
       return api.post("/water/add", { userId, amount });
     },
 
-    delete: (id) => api.delete(`/water/${id}`),
+    delete: (id) => {
+      if (api.isDemoUser()) {
+        const today =
+          JSON.parse(sessionStorage.getItem("demo_water_today")) || [];
+
+        const updated = today.filter((log) => log.id !== id);
+        sessionStorage.setItem("demo_water_today", JSON.stringify(updated));
+
+        return Promise.resolve({ success: true });
+      }
+
+      return api.delete(`/water/${id}`);
+    },
   },
   // Exercise API
   exercise: {
     getRecent: () => {
+      if (api.isDemoUser()) {
+        return JSON.parse(sessionStorage.getItem("demo_exercise")) || [];
+      }
+
       const userId = api.getUserId();
       return api.get(`/exercise/recent?userId=${userId}`);
     },
 
     getTotal: () => {
+      if (api.isDemoUser()) {
+        const data = JSON.parse(sessionStorage.getItem("demo_exercise")) || [];
+        const total = data.reduce((sum, e) => sum + e.duration, 0);
+        return Promise.resolve({ total });
+      }
+
       const userId = api.getUserId();
       return api.get(`/exercise/total?userId=${userId}`);
     },
 
     add: (type, duration, calories) => {
+      if (api.isDemoUser()) {
+        const data = JSON.parse(sessionStorage.getItem("demo_exercise")) || [];
+
+        data.push({
+          id: Date.now(),
+          type,
+          duration,
+          calories,
+          date: new Date().toISOString().split("T")[0], // ✅ YYYY-MM-DD
+          time: new Date().toLocaleTimeString("en-GB"),
+        });
+
+        sessionStorage.setItem("demo_exercise", JSON.stringify(data));
+        return Promise.resolve({ success: true });
+      }
+
       const userId = api.getUserId();
       return api.post("/exercise/add", { userId, type, duration, calories });
     },
+    delete: (id) => {
+      if (api.isDemoUser()) {
+        const data = JSON.parse(sessionStorage.getItem("demo_exercise")) || [];
+        const updated = data.filter((e) => e.id !== id);
 
-    delete: (id) => api.delete(`/exercise/${id}`),
+        sessionStorage.setItem("demo_exercise", JSON.stringify(updated));
+        return Promise.resolve({ success: true });
+      }
+
+      return api.delete(`/exercise/${id}`);
+    },
   },
 
   // Sleep API
   sleep: {
     getRecent: () => {
+      if (api.isDemoUser()) {
+        return JSON.parse(sessionStorage.getItem("demo_sleep")) || [];
+      }
+
       const userId = api.getUserId();
       return api.get(`/sleep/recent?userId=${userId}`);
     },
 
     getAverage: () => {
+      if (api.isDemoUser()) {
+        const data = JSON.parse(sessionStorage.getItem("demo_sleep")) || [];
+        if (data.length === 0) return Promise.resolve({ average: 0 });
+
+        const total = data.reduce((sum, s) => sum + s.hours, 0);
+        const average = Math.round((total / data.length) * 10) / 10;
+
+        return Promise.resolve({ average });
+      }
+
       const userId = api.getUserId();
       return api.get(`/sleep/average?userId=${userId}`);
     },
 
     add: (hours, quality) => {
+      if (api.isDemoUser()) {
+        const data = JSON.parse(sessionStorage.getItem("demo_sleep")) || [];
+
+        data.push({
+          id: Date.now(), 
+          hours,
+          quality,
+          date: new Date().toISOString().split("T")[0], // YYYY-MM-DD
+          time: new Date().toLocaleTimeString("en-GB"),
+        });
+
+        sessionStorage.setItem("demo_sleep", JSON.stringify(data));
+        return Promise.resolve({ success: true });
+      }
+
       const userId = api.getUserId();
       return api.post("/sleep/add", { userId, hours, quality });
     },
+    delete: (id) => {
+      if (api.isDemoUser()) {
+        const data = JSON.parse(sessionStorage.getItem("demo_sleep")) || [];
+        const updated = data.filter((s) => s.id !== id);
 
-    delete: (id) => api.delete(`/sleep/${id}`),
+        sessionStorage.setItem("demo_sleep", JSON.stringify(updated));
+        return Promise.resolve({ success: true });
+      }
+
+      return api.delete(`/sleep/${id}`);
+    },
   },
 
   // Calories API
   calories: {
     getToday: () => {
+      if (api.isDemoUser()) {
+        return JSON.parse(sessionStorage.getItem("demo_calories")) || [];
+      }
+
       const userId = api.getUserId();
       return api.get(`/calories/today?userId=${userId}`);
     },
 
     getTotal: () => {
+      if (api.isDemoUser()) {
+        const data = JSON.parse(sessionStorage.getItem("demo_calories")) || [];
+        const total = data.reduce((sum, c) => sum + c.calories, 0);
+
+        return Promise.resolve({ total });
+      }
+
       const userId = api.getUserId();
       return api.get(`/calories/total?userId=${userId}`);
     },
 
     add: (foodName, calories) => {
+      if (api.isDemoUser()) {
+        const data = JSON.parse(sessionStorage.getItem("demo_calories")) || [];
+
+        data.push({
+          id: Date.now(),
+          foodName,
+          calories,
+          date: new Date().toISOString().split("T")[0], // YYYY-MM-DD
+          time: new Date().toLocaleTimeString("en-GB"),
+        });
+
+        sessionStorage.setItem("demo_calories", JSON.stringify(data));
+        return Promise.resolve({ success: true });
+      }
+
       const userId = api.getUserId();
       return api.post("/calories/add", { userId, foodName, calories });
     },
+    delete: (id) => {
+      if (api.isDemoUser()) {
+        const data = JSON.parse(sessionStorage.getItem("demo_calories")) || [];
+        const updated = data.filter((c) => c.id !== id);
 
-    delete: (id) => api.delete(`/calories/${id}`),
+        sessionStorage.setItem("demo_calories", JSON.stringify(updated));
+        return Promise.resolve({ success: true });
+      }
+
+      return api.delete(`/calories/${id}`);
+    },
   },
 
   // Mood API
@@ -219,6 +348,16 @@ const api = {
   // Summary API
   summary: {
     getDaily: () => {
+      if (api.isDemoUser()) {
+        return {
+          water: 1200,
+          calories: 1500,
+          exercise: 300,
+          sleep: 7,
+          mood: 4,
+        };
+      }
+
       const userId = api.getUserId();
       return api.get(`/dashboard/summary?userId=${userId}`);
     },
@@ -235,7 +374,6 @@ const api = {
       const userId = api.getUserId();
       return `${API_BASE_URL}/database/export/csv?userId=${userId}`;
     },
-
     exportJSON: () => {
       const userId = api.getUserId();
       return api.get(`/database/export/json?userId=${userId}`);
@@ -264,6 +402,82 @@ const api = {
   // Dashboard API
   dashboard: {
     getStats: () => {
+      // ================= DEMO USER =================
+      if (api.isDemoUser()) {
+        const water =
+          JSON.parse(sessionStorage.getItem("demo_water_today")) || [];
+
+        const exercise =
+          JSON.parse(sessionStorage.getItem("demo_exercise")) || [];
+
+        const calories =
+          JSON.parse(sessionStorage.getItem("demo_calories")) || [];
+
+        const sleep = JSON.parse(sessionStorage.getItem("demo_sleep")) || [];
+
+        const mood = JSON.parse(sessionStorage.getItem("demo_mood")) || null;
+
+        // 💧 Water
+        const waterToday = water.reduce((sum, w) => sum + (w.amount || 0), 0);
+
+        // 🏃 Exercise (minutes)
+        const exerciseToday = exercise.reduce(
+          (sum, e) => sum + (e.duration || 0),
+          0
+        );
+
+        // 🔥 Calories
+        const caloriesToday = calories.reduce(
+          (sum, c) => sum + (c.calories || 0),
+          0
+        );
+
+        // 😴 Sleep average
+        const avgSleep =
+          sleep.length === 0
+            ? 0
+            : Math.round(
+                (sleep.reduce((sum, s) => sum + (s.hours || 0), 0) /
+                  sleep.length) *
+                  10
+              ) / 10;
+
+        // 🙂 Mood
+        const moodToday =
+          JSON.parse(sessionStorage.getItem("demo_mood_today"))?.mood ?? 3;
+
+        const history =
+          JSON.parse(sessionStorage.getItem("demo_mood_history")) || [];
+
+        const avgMood =
+          history.length === 0
+            ? moodToday
+            : history.reduce((s, m) => s + m.mood, 0) / history.length;
+
+        console.log(
+          waterToday,
+          "exercise: ",
+          exerciseToday,
+          "calories: ",
+          caloriesToday,
+          "sleep: ",
+          avgSleep,
+          "mood today: ",
+          moodToday,
+          "average mood: ",
+          avgMood
+        );
+        return Promise.resolve({
+          waterToday,
+          exerciseToday,
+          caloriesToday,
+          avgSleep,
+          moodToday,
+          avgMood,
+        });
+      }
+
+      // ================= REAL USER =================
       const userId = api.getUserId();
       return api.get(`/dashboard/stats?userId=${userId}`);
     },

@@ -104,6 +104,24 @@ async function handleLogout() {
 
 // Tab Management
 function showTab(tabName) {
+  // ================== LOCK DEMO USER ==================
+  if (api.isDemoUser() && (tabName === "summary" || tabName === "database")) {
+    Swal.fire({
+      icon: "warning",
+      title: "Login Required 🔒",
+      text: "Please login to access this feature.",
+      confirmButtonText: "Login Now",
+    }).then((result) => {
+      if (result.isConfirmed) {
+        window.location.href = "login.html";
+      }
+    });
+
+    return; // demo kaga bisa akses
+  }
+
+  // ================== NORMAL FLOW ==================
+
   // PAKSA BALIK KE ATAS
   window.scrollTo({ top: 0, behavior: "smooth" });
 
@@ -129,7 +147,8 @@ function showTab(tabName) {
   selectedTab.classList.add("active");
 
   // Activate tab button
-  document.querySelector(`[data-tab="${tabName}"]`).classList.add("active");
+  const tabButton = document.querySelector(`[data-tab="${tabName}"]`);
+  if (tabButton) tabButton.classList.add("active");
 
   // Load data sesuai tab
   if (tabName === "dashboard") loadDashboard();
@@ -619,13 +638,19 @@ async function loadDashboard() {
     ).textContent = `${Math.round(caloriesPercent)}% of ${caloriesLimit} kcal`;
 
     // Update mood
+    // ==================== MOOD ====================
     const moodEmojis = ["😐", "😢", "😟", "😐", "🙂", "😁"];
-    const moodToday = stats.moodToday || 0;
+
+    // Today mood
+    const moodToday = typeof stats.moodToday === "number" ? stats.moodToday : 3;
+
     document.getElementById("dashboard-mood").textContent =
       moodEmojis[moodToday] || "😐";
 
-    const avgMood = stats.avgMood || 0;
-    if (avgMood > 0) {
+    // Weekly avg (demo = sama dengan today)
+    const avgMood = typeof stats.avgMood === "number" ? stats.avgMood : null;
+
+    if (avgMood !== null) {
       document.getElementById(
         "dashboard-mood-avg"
       ).textContent = `Weekly avg: ${avgMood.toFixed(1)} ${
@@ -668,6 +693,42 @@ async function loadQuickStats() {
     }
   } catch (error) {
     console.error("Error loading quick stats:", error);
+  }
+}
+
+// Function to refresh dashboard data without switching tabs
+async function refreshDashboardData() {
+  try {
+    const stats = await api.dashboard.getStats();
+
+    // Update water
+    const waterGoal = 2000;
+    document.getElementById("dashboard-water").textContent = `${
+      stats.waterToday || 0
+    }ml`;
+    const waterPercent = Math.min(
+      ((stats.waterToday || 0) / waterGoal) * 100,
+      100
+    );
+    document.getElementById(
+      "dashboard-water-progress"
+    ).style.width = `${waterPercent}%`;
+    document.getElementById(
+      "dashboard-water-percent"
+    ).textContent = `${Math.round(waterPercent)}% of ${waterGoal}ml goal`;
+
+    // Update exercise
+    document.getElementById("dashboard-exercise").textContent = `${
+      stats.exerciseToday || 0
+    } min`;
+
+    // Update sleep
+    const avgSleep = stats.avgSleep || 0;
+    document.getElementById(
+      "dashboard-sleep"
+    ).textContent = `${avgSleep.toFixed(1)} hrs`;
+  } catch (error) {
+    console.error("Error refreshing dashboard:", error);
   }
 }
 
@@ -714,11 +775,17 @@ async function loadWaterData() {
                     <div class="flex items-center gap-3">
                         <i class="fas fa-tint text-blue-600"></i>
                         <div>
-                            <p class="font-medium text-left text-gray-800">${log.amount}ml</p>
-                            <p class="text-sm text-gray-600">${log.time}</p>
+                            <p class="font-medium text-left text-gray-800">${
+                              log.amount
+                            }ml</p>
+                            <p class="text-sm text-gray-600">${formatTimeToAMPM(
+                              log.time
+                            )}</p>
                         </div>
                     </div>
-                    <button onclick="deleteWater(${log.id})" class="text-red-600 hover:text-red-700 p-2">
+                    <button onclick="deleteWater(${
+                      log.id
+                    })" class="text-red-600 hover:text-red-700 p-2">
                         <i class="fas fa-trash"></i>
                     </button>
                 </div>
@@ -750,42 +817,6 @@ async function addWater() {
     document.getElementById("water-amount").value = 250;
   } catch (error) {
     console.error("Error adding water:", error);
-  }
-}
-
-// Function to refresh dashboard data without switching tabs
-async function refreshDashboardData() {
-  try {
-    const stats = await api.dashboard.getStats();
-
-    // Update water
-    const waterGoal = 2000;
-    document.getElementById("dashboard-water").textContent = `${
-      stats.waterToday || 0
-    }ml`;
-    const waterPercent = Math.min(
-      ((stats.waterToday || 0) / waterGoal) * 100,
-      100
-    );
-    document.getElementById(
-      "dashboard-water-progress"
-    ).style.width = `${waterPercent}%`;
-    document.getElementById(
-      "dashboard-water-percent"
-    ).textContent = `${Math.round(waterPercent)}% of ${waterGoal}ml goal`;
-
-    // Update exercise
-    document.getElementById("dashboard-exercise").textContent = `${
-      stats.exerciseToday || 0
-    } min`;
-
-    // Update sleep
-    const avgSleep = stats.avgSleep || 0;
-    document.getElementById(
-      "dashboard-sleep"
-    ).textContent = `${avgSleep.toFixed(1)} hrs`;
-  } catch (error) {
-    console.error("Error refreshing dashboard:", error);
   }
 }
 
@@ -834,11 +865,19 @@ async function loadExerciseData() {
                     <div class="flex items-center gap-3">
                         <i class="fas fa-running text-green-600"></i>
                         <div>
-                            <p class="font-medium text-left text-gray-800">${log.type} - ${log.duration} min</p>
-                            <p class="text-sm text-gray-600">${log.calories} cal • ${log.date} ${log.time}</p>
+                            <p class="font-medium text-left text-gray-800">${
+                              log.type
+                            } - ${log.duration} min</p>
+                            <p class="text-sm text-gray-600">${
+                              log.calories
+                            } cal • ${log.date} • ${formatTimeToAMPM(
+            log.time
+          )}</p>
                         </div>
                     </div>
-                    <button onclick="deleteExercise(${log.id})" class="text-red-600 hover:text-red-700 p-2">
+                    <button onclick="deleteExercise(${
+                      log.id
+                    })" class="text-red-600 hover:text-red-700 p-2">
                         <i class="fas fa-trash"></i>
                     </button>
                 </div>
@@ -982,9 +1021,22 @@ async function deleteSleep(id) {
 
 // ==================== BMI CALCULATOR ====================
 // ==================== BMI STORAGE (PER USER) ====================
-function getBMIStorageKey() {
+function getBMIStorage() {
   const user = JSON.parse(sessionStorage.getItem("fitlife_user"));
-  return user && user.isDemo ? "demo_bmi" : `bmi_user_${user.id}`;
+
+  if (!user) return null;
+
+  if (user.isDemo) {
+    return {
+      storage: sessionStorage,
+      key: "demo_bmi",
+    };
+  }
+
+  return {
+    storage: localStorage,
+    key: `bmi_user_${user.id}`,
+  };
 }
 
 let selectedSex = null;
@@ -1132,10 +1184,10 @@ function calculateBMI() {
   dashCat.className = `text-sm font-medium ${categoryClass}`;
 
   // 🔥 SAVE PER USER
-  const bmiKey = getBMIStorageKey();
-  if (bmiKey) {
-    localStorage.setItem(
-      bmiKey,
+  const bmiStore = getBMIStorage();
+  if (bmiStore) {
+    bmiStore.storage.setItem(
+      bmiStore.key,
       JSON.stringify({
         bmi,
         category,
@@ -1174,10 +1226,10 @@ function clearBMI() {
 }
 
 function loadUserBMI() {
-  const bmiKey = getBMIStorageKey();
-  if (!bmiKey) return;
+  const bmiStore = getBMIStorage();
+  if (!bmiStore) return;
 
-  const raw = localStorage.getItem(bmiKey);
+  const raw = bmiStore.storage.getItem(bmiStore.key);
   if (!raw) return;
 
   const data = JSON.parse(raw);
@@ -1239,11 +1291,17 @@ async function loadCaloriesData() {
                     <div class="flex items-center gap-3">
                         <i class="fas fa-utensils text-yellow-600"></i>
                         <div>
-                            <p class="font-medium text-gray-800">${log.foodName}</p>
-                            <p class="text-sm text-gray-600">${log.calories} kcal • ${log.time}</p>
+                            <p class="font-medium text-gray-800">${
+                              log.foodName
+                            }</p>
+                            <p class="text-sm text-gray-600">${
+                              log.calories
+                            } kcal • ${formatTimeToAMPM(log.time)}</p>
                         </div>
                     </div>
-                    <button onclick="deleteCalories(${log.id})" class="text-red-600 hover:text-red-700 p-2">
+                    <button onclick="deleteCalories(${
+                      log.id
+                    })" class="text-red-600 hover:text-red-700 p-2">
                         <i class="fas fa-trash"></i>
                     </button>
                 </div>
@@ -1297,6 +1355,15 @@ async function deleteCalories(id) {
 }
 
 // ==================== MOOD TRACKER ====================
+// helper
+function getDemoMoodKey() {
+  return "demo_mood_today";
+}
+
+function getDemoMoodHistoryKey() {
+  return "demo_mood_history";
+}
+
 let selectedMoodValue = 3; // Default neutral
 
 function selectMood(mood) {
@@ -1317,6 +1384,35 @@ async function saveMood() {
   const note = document.getElementById("mood-note").value.trim();
 
   try {
+    if (api.isDemoUser()) {
+      const today = new Date().toISOString().slice(0, 10);
+
+      const moodData = {
+        date: today,
+        mood: selectedMoodValue,
+        note,
+      };
+
+      // save today
+      sessionStorage.setItem(getDemoMoodKey(), JSON.stringify(moodData));
+
+      // save history (for average)
+      const history =
+        JSON.parse(sessionStorage.getItem(getDemoMoodHistoryKey())) || [];
+
+      const filtered = history.filter((m) => m.date !== today);
+      filtered.push(moodData);
+
+      sessionStorage.setItem(getDemoMoodHistoryKey(), JSON.stringify(filtered));
+
+      showAlert("Mood saved successfully!", "success");
+
+      await loadMoodData();
+      await refreshDashboardData();
+      return;
+    }
+
+    // REAL USER
     await api.mood.save(selectedMoodValue, note);
     showAlert("Mood saved successfully!", "success");
     await loadMoodData();
@@ -1328,11 +1424,25 @@ async function saveMood() {
 
 async function loadMoodData() {
   try {
-    // Use .catch() to handle 404 errors gracefully
-    const [todayMood, avgData] = await Promise.all([
-      api.mood.getToday().catch(() => null), // Already has this ✅
-      api.mood.getAverage().catch(() => ({ average: 0 })), // Add fallback here
-    ]);
+    let todayMood = null;
+    let avg = 0;
+
+    if (api.isDemoUser()) {
+      todayMood = JSON.parse(sessionStorage.getItem("demo_mood_today"));
+
+      const history =
+        JSON.parse(sessionStorage.getItem("demo_mood_history")) || [];
+
+      if (history.length > 0) {
+        avg = history.reduce((s, m) => s + m.mood, 0) / history.length;
+      }
+    } else {
+      const resToday = await api.mood.getToday().catch(() => null);
+      const resAvg = await api.mood.getAverage().catch(() => ({ average: 0 }));
+
+      todayMood = resToday;
+      avg = resAvg?.average || 0;
+    }
 
     const moodEmojis = ["😐", "😢", "😟", "😐", "🙂", "😁"];
     const moodLabels = [
@@ -1344,32 +1454,29 @@ async function loadMoodData() {
       "Very Happy",
     ];
 
-    // Display today's mood
-    if (todayMood && todayMood.mood !== undefined) {
-      // Better check
+    // ===== TODAY MOOD =====
+    if (todayMood && typeof todayMood.mood === "number") {
       const mood = todayMood.mood;
+
       document.getElementById("current-mood-display").textContent =
         moodEmojis[mood] || "😐";
+
       document.getElementById("current-mood-note").textContent =
-        todayMood.note?.trim() || moodLabels[mood] || "No mood logged";
+        todayMood.note?.trim() || moodLabels[mood] || "No note";
 
-      // Highlight selected mood
-      selectMood(mood);
+      selectMood(mood); // 🔥 INI PENTING (jangan reset)
 
-      // Fill textarea if note exists
       if (todayMood.note) {
         document.getElementById("mood-note").value = todayMood.note;
       }
     } else {
-      // No mood logged yet - show default
       document.getElementById("current-mood-display").textContent = "😐";
       document.getElementById("current-mood-note").textContent =
         "No mood logged yet";
-      selectMood(3); // Default to neutral
+      selectMood(3);
     }
 
-    // Display weekly average - handle null/undefined safely
-    const avg = avgData?.average || 0;
+    // ===== WEEKLY AVG =====
     if (avg > 0) {
       document.getElementById("mood-weekly-avg").textContent = avg.toFixed(1);
       document.getElementById("mood-weekly-emoji").textContent =
@@ -1378,14 +1485,8 @@ async function loadMoodData() {
       document.getElementById("mood-weekly-avg").textContent = "--";
       document.getElementById("mood-weekly-emoji").textContent = "😐";
     }
-  } catch (error) {
-    console.error("Error loading mood data:", error);
-    // dont show error alert, just set defaults
-    document.getElementById("current-mood-display").textContent = "😐";
-    document.getElementById("current-mood-note").textContent =
-      "No mood logged yet";
-    document.getElementById("mood-weekly-avg").textContent = "--";
-    document.getElementById("mood-weekly-emoji").textContent = "😐";
+  } catch (err) {
+    console.error("loadMoodData error:", err);
   }
 }
 
@@ -1420,16 +1521,29 @@ async function loadSummary() {
 
     // Water Summary
     const water = summary.water;
+
+    // ambil goal dari localStorage
+    const waterGoal = parseInt(localStorage.getItem("waterGoal")) || 2000;
+
+    // hitung ulang percentage & status (frontend source of truth)
+    const waterPercentage = Math.min((water.total / waterGoal) * 100, 100);
+
+    const waterStatus = water.total >= waterGoal ? "achieved" : "in_progress";
+
+    // render pake hasil
     document.getElementById(
       "summary-water-text"
-    ).textContent = `${water.total}ml / ${water.goal}ml`;
+    ).textContent = `${water.total}ml / ${waterGoal}ml`;
+
     document.getElementById(
       "summary-water-progress"
-    ).style.width = `${water.percentage}%`;
+    ).style.width = `${waterPercentage}%`;
+
     document.getElementById("summary-water-status").textContent =
-      water.status === "achieved" ? "✓ Achieved" : "In Progress";
+      waterStatus === "achieved" ? "✓ Achieved" : "In Progress";
+
     document.getElementById("summary-water-status").className =
-      water.status === "achieved"
+      waterStatus === "achieved"
         ? "px-2 py-1 text-xs rounded-full bg-green-200 text-green-800"
         : "px-2 py-1 text-xs rounded-full bg-blue-200 text-blue-800";
 
@@ -1777,6 +1891,22 @@ const demoStorage = {
       .forEach((k) => sessionStorage.removeItem(k));
   },
 };
+
+// FORMAT TIME
+function formatTimeToAMPM(timeString) {
+  if (!timeString) return "";
+
+  // timeString contoh: "20:38:52.407"
+  const [hour, minute] = timeString.split(":");
+
+  let h = parseInt(hour, 10);
+  const m = minute;
+
+  const ampm = h >= 12 ? "PM" : "AM";
+  h = h % 12 || 12; // convert 0 -> 12
+
+  return `${h}:${m} ${ampm}`;
+}
 
 // ==================== INITIALIZATION ====================
 // Load dashboard on page load
