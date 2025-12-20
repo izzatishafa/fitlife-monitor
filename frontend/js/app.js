@@ -550,6 +550,18 @@ function updateWaterGoal() {
   }
 }
 
+function saveCaloriesGoal() {
+  const goal =
+    parseInt(document.getElementById("calories-limit").value) || 2000;
+
+  localStorage.setItem("caloriesGoal", goal);
+
+  // refresh semua tampilan
+  loadCaloriesData();
+  loadDashboard();
+  loadSummary();
+}
+
 // ==================== DASHBOARD ====================
 // function updateCircularClock() {
 //     const now = new Date();
@@ -621,7 +633,8 @@ async function loadDashboard() {
     ).textContent = `${avgSleep.toFixed(1)} hrs`;
 
     // Update calories
-    const caloriesLimit = 2000;
+    const caloriesLimit =
+      parseInt(localStorage.getItem("caloriesGoal")) || 2000;
     const caloriesToday = stats.caloriesToday || 0;
     document.getElementById(
       "dashboard-calories"
@@ -730,6 +743,22 @@ async function refreshDashboardData() {
   } catch (error) {
     console.error("Error refreshing dashboard:", error);
   }
+
+  // update calories
+  const caloriesGoal = 0;
+  document.getElementById("dashboard-calories").textContent = `${
+    stats.caloriesToday || 0
+  }ml`;
+  const caloriesPercent = Math.min(
+    ((stats.caloriesToday || 0) / caloriesGoal) * 100,
+    100
+  );
+  document.getElementById(
+    "dashboard-calories-progress"
+  ).style.width = `${waterPercent}%`;
+  document.getElementById(
+    "dashboard-calories-percent"
+  ).textContent = `${Math.round(caloriesPercent)}% of ${caloriesGoal}ml goal`;
 }
 
 // ==================== WATER TRACKER ====================
@@ -1243,6 +1272,11 @@ function loadUserBMI() {
 
 // ==================== CALORIES TRACKER ====================
 async function loadCaloriesData() {
+  let savedGoal = parseInt(localStorage.getItem("caloriesGoal"));
+  if (!savedGoal || savedGoal <= 0) savedGoal = 2000;
+
+  document.getElementById("calories-limit").value = savedGoal;
+
   try {
     const [logs, totalData] = await Promise.all([
       api.calories.getToday(),
@@ -1576,16 +1610,29 @@ async function loadSummary() {
 
     // Calories Summary
     const calories = summary.calories;
+
+    const caloriesGoal = parseInt(localStorage.getItem("caloriesGoal")) || 2000;
+
+    const caloriesPercentage = Math.min(
+      (calories.total / caloriesGoal) * 100,
+      100
+    );
+
+    const caloriesStatus = calories.total <= caloriesGoal ? "good" : "exceeded";
+
     document.getElementById(
       "summary-calories-text"
-    ).textContent = `${calories.total} kcal / ${calories.goal} kcal`;
+    ).textContent = `${calories.total} kcal / ${caloriesGoal} kcal`;
+
     document.getElementById(
       "summary-calories-progress"
-    ).style.width = `${calories.percentage}%`;
+    ).style.width = `${caloriesPercentage}%`;
+
     document.getElementById("summary-calories-status").textContent =
-      calories.status === "good" ? "✓ Good" : "⚠ Exceeded";
+      caloriesStatus === "good" ? "✓ Good" : "⚠ Exceeded";
+
     document.getElementById("summary-calories-status").className =
-      calories.status === "good"
+      caloriesStatus === "good"
         ? "px-2 py-1 text-xs rounded-full bg-green-200 text-green-800"
         : "px-2 py-1 text-xs rounded-full bg-red-200 text-red-800";
 
